@@ -4,6 +4,7 @@
 
 #include "TargetStat.h"
 
+
 /**
  *
  * @param line line to remove \r
@@ -19,14 +20,37 @@ inline std::string &rm_nl(std::string &line) {
     }
 }
 
-int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
+int read_targets(std::ifstream &tar, TargetsCount &targetsCount, Reduce2Origin &reduce2Origin) {
     std::string line;;
+    std::regex tab_re("\\t|\\s+");
     while (getline(tar, line)) {
         line = rm_nl(line);
-        if (targetsCount.find(line) == targetsCount.end()) {
-            targetsCount.insert(std::make_pair(line, 0));
+        std::vector<std::string> v(std::sregex_token_iterator(line.begin(), line.end(), tab_re, -1),
+                                   std::sregex_token_iterator());
+        if (v.size() != 2) {
+            perror("Invalid format of input file, \"origin_pwd\treduce_pwd\" please!");
+            std::exit(-1);
         }
-        targetsCount.at(line)++;
+        std::string origin_pwd = v[0];
+        std::string reduce_pwd = v[1];
+        if (targetsCount.find(origin_pwd) == targetsCount.end()) {
+            targetsCount.insert(std::make_pair(origin_pwd, 0));
+        }
+        targetsCount.at(origin_pwd)++;
+        if (reduce2Origin.find(reduce_pwd) == reduce2Origin.end()) {
+            std::set<std::string> origins;
+            origins.insert(origin_pwd);
+            reduce2Origin.insert(std::make_pair(reduce_pwd, origins));
+        } else {
+            reduce2Origin.at(reduce_pwd).insert(origin_pwd);
+        }
+        if (reduce2Origin.find(origin_pwd) == reduce2Origin.end()) {
+            std::set<std::string> origins;
+            origins.insert(origin_pwd);
+            reduce2Origin.insert(std::make_pair(origin_pwd, origins));
+        } else {
+            reduce2Origin.at(origin_pwd).insert(origin_pwd);
+        }
     }
     return 0;
 }
@@ -34,7 +58,8 @@ int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
 int target_stat(std::ifstream &fin, std::ofstream &fout, std::ifstream &tar, std::string &splitter) {
     std::string line;
     TargetsCount targetsCount;
-    read_targets(tar, targetsCount);
+    Reduce2Origin reduce2Origin;
+    read_targets(tar, targetsCount, reduce2Origin);
     int total_targets = 0;
     for (auto &iter : targetsCount) {
         total_targets += iter.second;
@@ -42,16 +67,23 @@ int target_stat(std::ifstream &fin, std::ofstream &fout, std::ifstream &tar, std
     unsigned long long guesses = 0;
     unsigned long long cracked = 0;
     while (getline(fin, line)) {
-        guesses += 1;
         line = rm_nl(line);
-        if (targetsCount.find(line) != targetsCount.end() && targetsCount.at(line) > 0) {
-            int pwd_freq = targetsCount.at(line);
-            cracked += pwd_freq;
-            targetsCount.at(line) = 0;
-            fout << line << splitter << pwd_freq << splitter
-                 << guesses << splitter << cracked << splitter
-                 << std::setiosflags(std::ios::fixed) << std::setprecision(2)
-                 << ((double) cracked / total_targets * 100) << "\n";
+        if (reduce2Origin.find(line) == reduce2Origin.end()) {
+            guesses += 1;
+            continue;
+        }
+        auto origins = reduce2Origin.at(line);
+        for (auto &origin_pwd : origins) {
+            guesses += 1;
+            if (targetsCount.at(origin_pwd) > 0) {
+                int pwd_freq = targetsCount.at(origin_pwd);
+                cracked += pwd_freq;
+                targetsCount.at(origin_pwd) = 0;
+                fout << line << splitter << origin_pwd << splitter << pwd_freq << splitter
+                     << guesses << splitter << cracked << splitter
+                     << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+                     << ((double) cracked / total_targets * 100) << "\n";
+            }
         }
     }
     fout << "placeholder" << splitter << 0 << splitter

@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++11 -O2 -Wall -no-pie
+CXXFLAGS = -std=c++11 -O3 -Wall -no-pie
 
 TARGET = target_stat
 all = $(TARGET)
