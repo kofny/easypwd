@@ -39,7 +39,9 @@ int read_targets(std::ifstream &tar, TargetsCount &targetsCount, Reduce2Origin &
         if (targetsCount.find(origin_pwd) == targetsCount.end()) {
             targetsCount.insert(std::make_pair(origin_pwd, 0));
         }
-        targetsCount.at(origin_pwd)++;
+        if (origin_pwd == reduce_pwd) {
+            targetsCount.at(origin_pwd)++;
+        }
         if (reduce2Origin.find(reduce_pwd) == reduce2Origin.end()) {
             std::set<std::string> origins;
             origins.insert(origin_pwd);
