@@ -23,14 +23,17 @@ inline std::string &rm_nl(std::string &line) {
 int read_targets(std::ifstream &tar, TargetsCount &targetsCount, Reduce2Origin &reduce2Origin) {
     std::string line;;
     std::regex tab_re("\\t|\\s+");
+    int line_number = 1;
     while (getline(tar, line)) {
         line = rm_nl(line);
         std::vector<std::string> v(std::sregex_token_iterator(line.begin(), line.end(), tab_re, -1),
                                    std::sregex_token_iterator());
         if (v.size() != 2) {
-            perror("Invalid format of input file, \"origin_pwd\treduce_pwd\" please!");
+            std::cerr << "Invalid format of input file of line" << line_number << ": " << line
+                      << ",\n\"origin_pwd	reduce_pwd\" please!\n";
             std::exit(-1);
         }
+        line_number++;
         std::string origin_pwd = v[0];
         std::string reduce_pwd = v[1];
         if (targetsCount.find(origin_pwd) == targetsCount.end()) {
