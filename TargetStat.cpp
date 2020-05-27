@@ -21,7 +21,7 @@ inline std::string &rm_nl(std::string &line) {
 }
 
 int read_targets(std::ifstream &tar, TargetsCount &targetsCount, Reduce2Origin &reduce2Origin) {
-    std::string line;;
+    std::string line;
     std::regex tab_re("\\t|\\s+");
     int line_number = 1;
     while (getline(tar, line)) {
