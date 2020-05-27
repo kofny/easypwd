@@ -1,0 +1,7 @@
+*.txt
+!CMakeLists.txt
+target_stat
+cmake-build-debug
+*.o
+*.a
+.idea

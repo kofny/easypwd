@@ -1,0 +1,12 @@
+CXXFLAGS = -std=c++11 -O2 -Wall -no-pie
+
+TARGET = target_stat
+all = $(TARGET)
+
+target_stat: ./TargetStat.cpp ./TargetStat.h
+	g++ ./TargetStat.cpp -o $@ $(CXXFLAGS)
+
+.PHONY: clean
+clean:
+	rm -f target_stat
+
