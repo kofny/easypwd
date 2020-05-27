@@ -1,6 +1,6 @@
 *.txt
 !CMakeLists.txt
-target_stat
+target_stat*
 cmake-build-debug
 *.o
 *.a
