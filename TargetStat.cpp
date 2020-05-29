@@ -91,7 +91,7 @@ int target_stat(std::ifstream &fin, std::ofstream &fout, std::ifstream &tar, std
             }
         }
     }
-    fout << "placeholder" << splitter << 0 << splitter
+    fout << "daslab_holder" << splitter << "daslab_holder" << splitter << 0 << splitter
          << guesses << splitter << cracked << splitter
          << std::setiosflags(std::ios::fixed) << std::setprecision(2)
          << ((double) cracked / total_targets * 100) << "\n";
