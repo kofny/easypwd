@@ -73,13 +73,13 @@ int target_stat(std::ifstream &fin, std::ofstream &fout, std::ifstream &tar, std
     unsigned long long cracked = 0;
     while (getline(fin, line)) {
         line = rm_nl(line);
+        guesses += 1;
         if (reduce2Origin.find(line) == reduce2Origin.end()) {
-            guesses += 1;
             continue;
         }
         auto origins = reduce2Origin.at(line);
         for (auto &origin_pwd : origins) {
-            guesses += 1;
+//            guesses += 1;
             if (targetsCount.at(origin_pwd) > 0) {
                 int pwd_freq = targetsCount.at(origin_pwd);
                 cracked += pwd_freq;
