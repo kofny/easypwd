@@ -4,6 +4,23 @@
 
 #include "TargetStat.h"
 
+void split(const std::string &s, std::vector<std::string> &tokens, char delim = ' ') {
+    tokens.clear();
+    auto string_find_first_not = [s, delim](size_t pos = 0) -> size_t {
+        for (size_t i = pos; i < s.size(); i++) {
+            if (s[i] != delim) return i;
+        }
+        return std::string::npos;
+    };
+    size_t lastPos = string_find_first_not(0);
+    size_t pos = s.find(delim, lastPos);
+    while (lastPos != std::string::npos) {
+        tokens.emplace_back(s.substr(lastPos, pos - lastPos));
+        lastPos = string_find_first_not(pos);
+        pos = s.find(delim, lastPos);
+    }
+}
+
 /**
  *
  * @param line line to remove \r
@@ -31,69 +48,86 @@ int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
     return 0;
 }
 
-int target_stat(std::ifstream &fin, std::ofstream &fout, std::ifstream &tar, std::string &splitter) {
+int target_stat(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &tar_pwd_list,
+                std::string &splitter, char delim) {
     std::string line;
     TargetsCount targetsCount;
-    read_targets(tar, targetsCount);
+    read_targets(tar_pwd_list, targetsCount);
     int total_targets = 0;
     for (auto &iter : targetsCount) {
         total_targets += iter.second;
     }
     unsigned long long guesses = 0;
     unsigned long long cracked = 0;
-    while (getline(fin, line)) {
+    while (getline(guesses_file, line)) {
         guesses += 1;
         line = rm_nl(line);
-        if (targetsCount.find(line) != targetsCount.end() && targetsCount.at(line) > 0) {
-            int pwd_freq = targetsCount.at(line);
+        auto tokens = std::vector<std::string>();
+        split(line, tokens, delim);
+        if (tokens.size() != 2) {
+            fprintf(stderr, "%s is not the format of (pwd   log_prob)\n", line.c_str());
+            std::exit(-1);
+        }
+        std::string pwd = tokens[0];
+        std::string log_prob = tokens[1];
+        if (targetsCount.find(pwd) != targetsCount.end() && targetsCount.at(pwd) > 0) {
+            int pwd_freq = targetsCount.at(pwd);
             cracked += pwd_freq;
-            targetsCount.at(line) = 0;
-            fout << line << splitter << pwd_freq << splitter
+            targetsCount.at(pwd) = 0;
+            fout << pwd << splitter << log_prob << splitter << pwd_freq << splitter
                  << guesses << splitter << cracked << splitter
                  << std::setiosflags(std::ios::fixed) << std::setprecision(2)
                  << ((double) cracked / total_targets * 100) << "\n";
         }
     }
-    fout << "placeholder" << splitter << 0 << splitter
-         << guesses << splitter << cracked << splitter
-         << std::setiosflags(std::ios::fixed) << std::setprecision(2)
-         << ((double) cracked / total_targets * 100) << "\n";
+//    fout << "cwwang_holder" << splitter << 0 << splitter
+//         << guesses << splitter << cracked << splitter
+//         << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+//         << ((double) cracked / total_targets * 100) << "\n";
 
     return 0;
 }
 
 
 int main(int argc, char *argv[]) {
-    std::ifstream fin;
+    std::ifstream guesses_file;
     std::ofstream fout;
-    std::ifstream tar;
+    std::ifstream tar_pwd_list;
     std::string splitter("\t");
-    auto cli = ((clipp::required("-i", "--input") & clipp::value("input").call([&](const std::string &f) {
-        fin.open(f, std::ios::in);
-        if (!fin.is_open()) {
-            perror("cannot reading input from file...\n");
-            std::exit(-1);
-        }
-    })), (clipp::required("-o", "--output") & clipp::value("output").call([&](const std::string &f) {
-        fout.open(f, std::ios::out);
-        if (!fout.is_open()) {
-            std::cerr << "cannot open output file " << f << std::endl;
-            std::exit(-1);
-        }
-    })), (clipp::required("-t", "--target") & clipp::value("target").call([&](const std::string &f) {
-        tar.open(f, std::ios::in);
-        if (!tar.is_open()) {
-            std::cerr << "Failed to open " << f << std::endl;
-            std::exit(-1);
-        }
-    })), (clipp::option("-s", "--split") & clipp::value("guesses: cracked", splitter)));
+    char delim = '\t';
+    auto cli = ((clipp::required("-i", "--guesses") &
+                 clipp::value("input, pair of (pwd, log_prob)").call([&](const std::string &f) {
+                     guesses_file.open(f, std::ios::in);
+                     if (!guesses_file.is_open()) {
+                         perror("cannot reading input from file...\n");
+                         std::exit(-1);
+                     }
+                 })),
+            (clipp::required("-o", "--output") &
+             clipp::value("output").call([&](const std::string &f) {
+                 fout.open(f, std::ios::out);
+                 if (!fout.is_open()) {
+                     std::cerr << "cannot open output file " << f << std::endl;
+                     std::exit(-1);
+                 }
+             })),
+            (clipp::required("-t", "--target") & clipp::value("target").call([&](const std::string &f) {
+                tar_pwd_list.open(f, std::ios::in);
+                if (!tar_pwd_list.is_open()) {
+                    std::cerr << "Failed to open " << f << std::endl;
+                    std::exit(-1);
+                }
+            })),
+            (clipp::option("-s", "--split4output") & clipp::value("guesses: cracked", splitter)),
+            (clipp::option("-d", "--delim4guesses") & clipp::value("guesses log_prob", delim))
+    );
 
     if (clipp::parse(argc, argv, cli)) {
-        target_stat(fin, fout, tar, splitter);
-        fin.close();
+        target_stat(guesses_file, fout, tar_pwd_list, splitter, delim);
+        guesses_file.close();
         fout.flush();
         fout.close();
-        tar.close();
+        tar_pwd_list.close();
     } else {
         std::cerr << clipp::usage_lines(cli, "Target Stat") << std::endl;
         return 1;
