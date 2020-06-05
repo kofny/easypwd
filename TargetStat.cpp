@@ -49,7 +49,7 @@ int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
 }
 
 int target_stat(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &tar_pwd_list,
-                std::string &splitter, char delim) {
+                std::string &splitter, char delim, bool with_prob) {
     std::string line;
     TargetsCount targetsCount;
     read_targets(tar_pwd_list, targetsCount);
@@ -62,22 +62,33 @@ int target_stat(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream 
     while (getline(guesses_file, line)) {
         guesses += 1;
         line = rm_nl(line);
-        auto tokens = std::vector<std::string>();
-        split(line, tokens, delim);
-        if (tokens.size() != 2) {
-            fprintf(stderr, "%s is not the format of (pwd   log_prob)\n", line.c_str());
-            std::exit(-1);
+        std::string pwd = line;
+        std::string log_prob;
+        if (with_prob) {
+            auto tokens = std::vector<std::string>();
+            split(line, tokens, delim);
+            if (tokens.size() != 2) {
+                fprintf(stderr, "%s is not the format of (pwd   log_prob)\n", line.c_str());
+                std::exit(-1);
+            }
+            pwd = tokens[0];
+            log_prob = tokens[1];
         }
-        std::string pwd = tokens[0];
-        std::string log_prob = tokens[1];
         if (targetsCount.find(pwd) != targetsCount.end() && targetsCount.at(pwd) > 0) {
             int pwd_freq = targetsCount.at(pwd);
             cracked += pwd_freq;
             targetsCount.at(pwd) = 0;
-            fout << pwd << splitter << log_prob << splitter << pwd_freq << splitter
-                 << guesses << splitter << cracked << splitter
-                 << std::setiosflags(std::ios::fixed) << std::setprecision(2)
-                 << ((double) cracked / total_targets * 100) << "\n";
+            if (with_prob) {
+                fout << pwd << splitter << log_prob << splitter << pwd_freq << splitter
+                     << guesses << splitter << cracked << splitter
+                     << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+                     << ((double) cracked / total_targets * 100) << "\n";
+            } else {
+                fout << pwd << splitter << pwd_freq << splitter
+                     << guesses << splitter << cracked << splitter
+                     << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+                     << ((double) cracked / total_targets * 100) << "\n";
+            }
         }
     }
 //    fout << "cwwang_holder" << splitter << 0 << splitter
@@ -95,6 +106,7 @@ int main(int argc, char *argv[]) {
     std::ifstream tar_pwd_list;
     std::string splitter("\t");
     char delim = '\t';
+    bool with_prob = false;
     auto cli = ((clipp::required("-i", "--guesses") &
                  clipp::value("input, pair of (pwd, log_prob)").call([&](const std::string &f) {
                      guesses_file.open(f, std::ios::in);
@@ -119,15 +131,37 @@ int main(int argc, char *argv[]) {
                 }
             })),
             (clipp::option("-s", "--split4output") & clipp::value("guesses: cracked", splitter)),
-            (clipp::option("-d", "--delim4guesses") & clipp::value("guesses log_prob", delim))
+            (clipp::option("-d", "--delim4guesses") & clipp::value("guesses log_prob", delim)),
+            (clipp::option("-p", "--with-prob").set(with_prob, true))
     );
 
     if (clipp::parse(argc, argv, cli)) {
-        target_stat(guesses_file, fout, tar_pwd_list, splitter, delim);
+        std::string line;
+        getline(guesses_file, line);
+        guesses_file.seekg(0, std::ios::beg);
+        if (with_prob) {
+            std::cout << "Mode: pwd & prob\n"
+                      << "Delim: \"" << delim << "\"" << std::endl;
+            if (line.find(delim) == std::string::npos) {
+                std::cerr << "Cannot find \"" << delim
+                          << "\", your line should in format of (pwd    prob),"
+                             " re-check please!" << std::endl;
+                std::exit(-1);
+            }
+        } else {
+            if (line.find(delim) != std::string::npos) {
+                std::cerr << "WARNING: guesses file contains \"" << delim
+                          << R"(", however, you are in "pwd only" mode)" << std::endl;
+            }
+            std::cout << "Mode: pwd only\n";
+        }
+        std::cout << "Splitter: \"" << splitter << "\"" << std::endl;
+        target_stat(guesses_file, fout, tar_pwd_list, splitter, delim, with_prob);
         guesses_file.close();
         fout.flush();
         fout.close();
         tar_pwd_list.close();
+        std::cout << "Done!" << std::endl;
     } else {
         std::cerr << clipp::usage_lines(cli, "Target Stat") << std::endl;
         return 1;
