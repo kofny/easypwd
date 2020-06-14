@@ -10,5 +10,5 @@ Compare plaintext passwords with specified targets
 - -d: delim in guesses file, "\t" by default
 
 ## outputs
-output are organized as follows:
+outputs are organized as follows:
 pwd prob(optional)  appearance  guess_number    cracked_num cracked_ratio
