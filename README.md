@@ -1,5 +1,7 @@
 # easypwd
-Some password utils 
+Some password utils.
+
+Codes implemented in Python will not use external packages if possible.
 
 ## 1. plainpwdcmp
 
