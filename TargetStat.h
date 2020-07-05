@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <iomanip>
 #include "include/clipp.h"
+#include "include/tqdm.h"
 
 typedef std::unordered_map<std::string, int> TargetsCount;
 

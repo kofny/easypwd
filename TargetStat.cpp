@@ -37,7 +37,7 @@ inline std::string &rm_nl(std::string &line) {
 }
 
 int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
-    std::string line;;
+    std::string line;
     while (getline(tar, line)) {
         line = rm_nl(line);
         if (targetsCount.find(line) == targetsCount.end()) {
@@ -59,7 +59,11 @@ int target_stat(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream 
     }
     unsigned long long guesses = 0;
     unsigned long long cracked = 0;
+    unsigned long long cur = 0;
     while (getline(guesses_file, line)) {
+        if (cur++ % 1000000 == 0) {
+            tqdm::tqdm(cur);
+        }
         guesses += 1;
         line = rm_nl(line);
         std::string pwd = line;
@@ -91,11 +95,7 @@ int target_stat(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream 
             }
         }
     }
-//    fout << "cwwang_holder" << splitter << 0 << splitter
-//         << guesses << splitter << cracked << splitter
-//         << std::setiosflags(std::ios::fixed) << std::setprecision(2)
-//         << ((double) cracked / total_targets * 100) << "\n";
-
+    std::cerr << "                                                \n";
     return 0;
 }
 
