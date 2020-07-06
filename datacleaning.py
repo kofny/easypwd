@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+find all lines composed of printable ASCII,
+you may re-define "valid_chr_re" to change the behaviour
+"""
 import argparse
 import re
 import sys

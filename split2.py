@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+"""
+Split dataset to training and testing set
+"""
 import argparse
 import os
 import re
@@ -54,13 +58,13 @@ def main():
     cli.add_argument('-c', '--corpus', dest='corpus', required=True, type=argparse.FileType('r'),
                      help='corpus to be split')
     cli.add_argument('-s', '--training', dest='training', required=True, type=argparse.FileType("w"),
-                     help="training set, source")
+                     help="training set will be saved here, source")
     cli.add_argument('-t', '--testing', dest='testing', required=True, type=argparse.FileType('w'),
-                     help='testing set, target')
+                     help='testing set will be saved here, target')
     cli.add_argument('-a', '--ratio4train', dest='ratio4train', required=False, type=int, default=3,
-                     help='the ratio of training set')
+                     help='the ratio of training set, an integer, training takes a / (a + b)')
     cli.add_argument('-b', '--ratio4test', dest='ratio4test', required=False, type=int, default=1,
-                     help='the ratio of testing set')
+                     help='the ratio of testing set, an integer, testing takes b / (a + b)')
     cli.add_argument('-l', '--low', dest='len_min', required=False, type=int, default=4,
                      help='length less than this will be ignored')
     cli.add_argument('-u', '--high', dest='len_max', required=False, type=int, default=255,
@@ -76,8 +80,5 @@ def main():
 
 
 if __name__ == '__main__':
-    if sys.version_info[0] != 3 or sys.version_info[1] < 6:
-        sys.stderr.write("Python version should be >= 3.6")
-        sys.exit(-1)
     main()
     pass
