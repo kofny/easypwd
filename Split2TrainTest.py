@@ -64,7 +64,7 @@ def main():
     cli.add_argument('-l', '--low', dest='len_min', required=False, type=int, default=4,
                      help='length less than this will be ignored')
     cli.add_argument('-u', '--high', dest='len_max', required=False, type=int, default=255,
-                     help="length larger than this will be ignroed")
+                     help="length larger than this will be ignored")
     args = cli.parse_args()
     if args.ratio4train < 1 or args.ratio4test < 1 or args.len_max < args.len_min:
         sys.exit(-1)
