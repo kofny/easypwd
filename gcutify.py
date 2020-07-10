@@ -109,11 +109,6 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
 
 
 def main():
-    jsonify(label="hello",
-            fd_gc=open("/home/cw/Documents/Experiments/SegLab/SimulatedCracked/csdn-origin.txt"),
-            fd_save=open("./hello.json", "w"),
-            fd_test=open("/home/cw/Documents/Experiments/SegLab/Corpora/csdn-tar.txt")
-            )
     cli = argparse.ArgumentParser("Beautify Guess-Crack result file")
     cli.add_argument("-l", "--label", required=True, dest="label", type=str, help="how to identify this curve")
     cli.add_argument("-f", "--gc", required=True, dest="fd_gc", type=argparse.FileType("r"),
@@ -158,7 +153,6 @@ def main():
             lower_bound=args.lower_bound, upper_bound=args.upper_bound, color=args.color,
             marker=args.marker,
             line_style=args.line_style, line_width=args.line_width, key=my_key)
-    pass
 
 
 if __name__ == '__main__':
