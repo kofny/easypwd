@@ -33,3 +33,34 @@ pwd | prob(optional) | appearance | guess_number | cracked_num | cracked_ratio
 
 ### outputs
 Removed invalid passwords (unprintable ASCII, too short length, etc.) will be saved if any.
+
+## 3. gcutify.py
+
+### usage
+
+The usage of gcutify is to some extent a long story, so you'd better
+ type in "./gcutify.py -h" in shell and see help info.
+
+### outputs
+
+A json file contains following items:
+- label
+- total number of passwords in test set, to calc the crack ratio
+- color of this curve
+- marker of points of curve
+- line_width
+_ line_style, solid or other
+- guesses_list
+_ cracked_list
+
+## curver.py
+
+### usage
+See help info please. 
+
+This is a relatively easy utils to draw curves.
+
+If you want some additional functions, rewrite it.
+
+### outputs
+A picture
