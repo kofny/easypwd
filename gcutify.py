@@ -109,6 +109,12 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
 
 
 def main():
+    line_style_dict = {
+        "solid": "-",
+        "dash": "--",
+        "dot_dash": "-.",
+        "dot": ":"
+    }
     cli = argparse.ArgumentParser("Beautify Guess-Crack result file")
     cli.add_argument("-l", "--label", required=True, dest="label", type=str, help="how to identify this curve")
     cli.add_argument("-f", "--gc", required=True, dest="fd_gc", type=argparse.FileType("r"),
@@ -123,12 +129,12 @@ def main():
                      help="guesses greater than this will be ignored and will not appear in beautified json file")
     cli.add_argument("-c", "--color", required=False, dest="color", default=None, type=str,
                      help="color of curve, using DEFAULT config if you dont set this flag")
-    cli.add_argument("--ls", required=False, dest="line_style", default="-", type=str, choices=["-", "--", "-.", ":"],
-                     help="style of line, solid or other")
-    cli.add_argument("--mkr", required=False, dest="marker", default=None, type=str,
-                     choices=["+", "o", ".", ",", "<", ">", "v", "^", "1", "2", "3", "4", "s", "p", "_", "|", "x", "*"],
+    cli.add_argument("--line-style", required=False, dest="line_style", default="solid", type=str,
+                     choices=list(line_style_dict.keys()), help="style of line, solid or other")
+    cli.add_argument("--marker", required=False, dest="marker", default=None, type=str,
+                     choices=["+", "o", ".", ",", "<", ">", "v", "^", "1", "2", "3", "4", "s", "p", "_", "x", "*"],
                      help="the marker for points of curve, default None")
-    cli.add_argument("--lw", required=False, dest="line_width", default=1.0, type=float,
+    cli.add_argument("--line-width", required=False, dest="line_width", default=1.0, type=float,
                      help="width of line, can be float point number")
     cli.add_argument("--gc-split", required=False, dest="gc_split", default="\t", type=str,
                      help="how to split a line in guess-crack file, default is '\\t'")
@@ -152,7 +158,8 @@ def main():
     jsonify(label=args.label, fd_gc=args.fd_gc, fd_save=args.fd_save, fd_test=args.fd_test,
             lower_bound=args.lower_bound, upper_bound=args.upper_bound, color=args.color,
             marker=args.marker,
-            line_style=args.line_style, line_width=args.line_width, key=my_key)
+            line_style=line_style_dict.get(args.line_style, "solid"),
+            line_width=args.line_width, key=my_key)
 
 
 if __name__ == '__main__':

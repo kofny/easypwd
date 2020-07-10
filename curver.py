@@ -10,12 +10,13 @@ from typing import TextIO, List
 
 import matplotlib.pyplot as plt
 
-auto_legend = -2
-no_legend = -1
+
+def parse_legend(pyplt, legend):
+    pass
 
 
 def curve(json_files: List[TextIO], save: str, xlabel: str, ylabel: str,
-          xscale: str, yscale: str, ysuffix: str,
+          xscale: str, yscale: str, ysuffix: str, legend_pos: str,
           use_tight_layout: bool, close_fd: bool = True):
     if os.path.isdir(save):
         print(f"{save} is a directory, use a file please", file=sys.stderr)
@@ -49,8 +50,15 @@ def curve(json_files: List[TextIO], save: str, xlabel: str, ylabel: str,
     plt.xlabel(xlabel=xlabel)
     plt.ylabel(ylabel=ylabel)
     y_locs, _ = plt.yticks()
+    y_locs = [loc for loc in y_locs if 0 <= loc <= 100]
     plt.yticks(y_locs, [f"{loc}{ysuffix}" for loc in y_locs])
     plt.grid(ls="--")
+    if legend_pos in {"0", "1", "2", "3"}:
+        plt.legend(loc=int(legend_pos))
+    elif legend_pos == "auto":
+        plt.legend()
+    elif legend_pos == "follow":
+        pass
     plt.savefig(save)
     plt.close(fig)
     pass
@@ -72,8 +80,9 @@ def main():
                      help="what does y axis mean")
     cli.add_argument("--ysuffix", required=False, dest="ysuffix", type=str, default="%",
                      help="symbol representing the unit of y axis")
-    cli.add_argument("--legend-pos", required=False, dest="legend_pos", type=int, default=auto_legend,
-                     help="set it to -1 if you dont want use label")
+    cli.add_argument("--legend-pos", required=False, dest="legend_pos", type=str, default="auto",
+                     choices=["none", "auto", "ul", "ur", "bl", "br", "follow"],
+                     help="set it to -2 if you dont want use label")
     cli.add_argument("--xscale", required=False, dest="xscale", type=str, default="log",
                      choices=["linear", "log", "symlog", "logit"], help="scale x axis")
     cli.add_argument("--yscale", required=False, dest="yscale", type=str, default="linear",
@@ -85,7 +94,8 @@ def main():
     if not suffix_ok:
         args.fd_save += args.suffix
     curve(json_files=args.json_files, save=args.fd_save, xscale=args.xscale, yscale=args.yscale,
-          use_tight_layout=args.tight, xlabel=args.xlabel, ylabel=args.ylabel, ysuffix=args.ysuffix)
+          use_tight_layout=args.tight, xlabel=args.xlabel, ylabel=args.ylabel, ysuffix=args.ysuffix,
+          legend_pos=args.legend_pos)
     pass
 
 
