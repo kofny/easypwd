@@ -11,10 +11,6 @@ from typing import TextIO, List
 import matplotlib.pyplot as plt
 
 
-def parse_legend(pyplt, legend):
-    pass
-
-
 def curve(json_files: List[TextIO], save: str, xlabel: str, ylabel: str,
           xscale: str, yscale: str, ysuffix: str, legend_pos: str,
           use_tight_layout: bool, close_fd: bool = True):
