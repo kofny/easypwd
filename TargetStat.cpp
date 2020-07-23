@@ -61,9 +61,10 @@ int target_stat(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream 
     unsigned long long cracked = 0;
     unsigned long long cur = 0;
     while (getline(guesses_file, line)) {
-        if (cur++ % 1000000 == 0) {
+        if (cur % 1000000 == 0) {
             tqdm::tqdm(cur);
         }
+        cur++;
         guesses += 1;
         line = rm_nl(line);
         std::string pwd = line;
