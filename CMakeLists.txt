@@ -3,4 +3,4 @@ project(FStat)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(TargetStat TargetStat.cpp TargetStat.h)
+add_executable(TargetStat plaincmp.cpp plaincmp.h)
