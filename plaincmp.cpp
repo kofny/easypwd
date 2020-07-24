@@ -48,8 +48,8 @@ int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
     return 0;
 }
 
-int target_stat(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &tar_pwd_list,
-                std::string &splitter, char delim, bool with_prob) {
+int plain_cmp(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &tar_pwd_list,
+              std::string &splitter, char delim, bool with_prob) {
     std::string line;
     TargetsCount targetsCount;
     read_targets(tar_pwd_list, targetsCount);
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
             std::cout << "Mode: pwd only\n";
         }
         std::cout << "Splitter: \"" << splitter << "\"" << std::endl;
-        target_stat(guesses_file, fout, tar_pwd_list, splitter, delim, with_prob);
+        plain_cmp(guesses_file, fout, tar_pwd_list, splitter, delim, with_prob);
         guesses_file.close();
         fout.flush();
         fout.close();

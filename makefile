@@ -3,8 +3,8 @@ CXXFLAGS = -std=c++11 -O3 -Wall -no-pie
 TARGET = target_stat
 all = $(TARGET)
 
-target_stat: ./TargetStat.cpp ./TargetStat.h
-	g++ ./TargetStat.cpp -o $@ $(CXXFLAGS)
+target_stat: ./plaincmp.cpp ./plaincmp.h
+	g++ ./plaincmp.cpp -o $@ $(CXXFLAGS)
 
 .PHONY: clean
 clean:
