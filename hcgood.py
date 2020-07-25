@@ -6,13 +6,15 @@ THis file will convert the output of (plain, crack_pos) to (pwd, num, #guesses, 
 import argparse
 import sys
 from collections import defaultdict
-from typing import TextIO, Dict, Generator, Tuple
+from typing import TextIO, Dict, Generator, Tuple, Any
 
 
 def read_hc_res(hc_res: TextIO) -> Dict[str, int]:
     pwd_pos = {}
     for line in hc_res:
-        plain_pwd, crack_pos = line.strip("\r\n").strip(":")
+        line = line.strip("\r\n")
+        k = line.rfind(":")
+        plain_pwd, crack_pos = line[:k], line[k + 1:]
         pwd_pos[plain_pwd] = int(crack_pos)
     return pwd_pos
 
@@ -33,14 +35,14 @@ def hcgood(pwd_pos: Dict[str, int], pwd_cnt: Dict[str, int]):
         pwd_cnt_pos_list.append((pwd, cnt, crack_pos))
     del pwd_cnt
     del pwd_pos
-    pwd_cnt_pos_list = sorted(pwd_cnt_pos_list, key=lambda p, n, c: c, reverse=False)
+    pwd_cnt_pos_list = sorted(pwd_cnt_pos_list, key=lambda x: x[2], reverse=False)
     cracked = 0
     for pwd, cnt, crack_pos in pwd_cnt_pos_list:
         cracked += cnt
         yield pwd, .0, cnt, crack_pos, cracked, cracked / total * 100
 
 
-def save(data: Generator[Tuple[str, float, int, int, int, float]], fd: TextIO, close_fd: bool = True):
+def save(data: Generator[Tuple[str, float, int, int, int, float], Any, None], fd: TextIO, close_fd: bool = True):
     for pwd, prob, cnt, rank, cracked, cracked_rate in data:
         fd.write(f"{pwd}\t{prob}\t{cnt}\t{rank}\t{cracked}\t{cracked_rate:5.2f}\n")
     fd.flush()

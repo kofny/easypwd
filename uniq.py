@@ -47,10 +47,14 @@ def main():
                      help="results to be saved")
     cli.add_argument("-s", "--sort", dest="order", default="order", type=str,
                      choices=["reverse", "random", "order"], help="the order of unique lines in output stream")
-    args = cli.parse_args()
-    uniq_lines = uniq(args.input)
-    save(uniq_lines, save2=args.output, order=args.order)
-    args.output.close()
+    try:
+        args = cli.parse_args()
+        uniq_lines = uniq(args.input)
+        save(uniq_lines, save2=args.output, order=args.order)
+        args.output.close()
+    except KeyboardInterrupt:
+        print(f"Canceled")
+        sys.exit(-1)
 
 
 if __name__ == '__main__':
