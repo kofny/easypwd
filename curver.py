@@ -15,7 +15,7 @@ class DefaultVal:
     limlow = -1
     limhigh = -1
     empty_ticks = []
-    auto_legend = None
+    legend = "none"
     legendfontsize = 12
 
 
@@ -54,10 +54,20 @@ class PlotParams:
         self.xscale = args.xscale
         self.yscale = args.yscale
 
-        self.legendpos = args.legend_pos
+        self.legendloc = args.legendloc
         self.legendfontsize = args.legendfontsize
 
         self.settightlayout = args.tight
+
+        self.vlines = args.vlines
+        self.vlinewidth = args.vlinewidth
+        self.vlinecolor = args.vlinecolor
+        self.vlinestyle = args.vlinestyle
+
+        if not (len(self.vlines) == len(self.vlinewidth) == len(self.vlinecolor) == len(self.vlines)):
+            print(f"vlines should have same number of parameters", file=sys.stderr)
+            sys.exit(-1)
+            pass
 
         self.save = args.fd_save
         if os.path.isdir(self.save):
@@ -122,15 +132,25 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     if len(plot_params.xticksval) != len(DefaultVal.empty_ticks):
         plt.xticks(plot_params.xticksval, plot_params.xtickstext)
     plt.tick_params(labelsize=plot_params.ticksize)
+    for vline_x, vlinewidth, vlinecolor, vlinestyle in \
+            zip(plot_params.vlines, plot_params.vlinewidth,
+                plot_params.vlinecolor, plot_params.vlinestyle):
+        plt.axvline(x=vline_x, linewidth=vlinewidth, color=vlinecolor, linestyle=vlinestyle)
     plt.grid(ls="--")
-    if plot_params.legendpos is not DefaultVal.auto_legend:
-        plt.legend(loc=int(plot_params.legendpos), fontsize=plot_params.legendfontsize)
+    if plot_params.legendloc != DefaultVal.legend:
+        plt.legend(loc=plot_params.legendloc, fontsize=plot_params.legendfontsize)
     plt.savefig(plot_params.save)
     plt.close(fig)
     pass
 
 
 def main():
+    line_style_dict = {
+        "solid": "-",
+        "dash": "--",
+        "dot_dash": "-.",
+        "dot": ":"
+    }
     cli = argparse.ArgumentParser("Curver: An Easy Guess-Crack Curve Drawer")
     valid_suffix = [".pdf", ".png"]
     cli.add_argument("-f", "--files", required=True, dest="json_files", nargs="+", type=argparse.FileType("r"),
@@ -174,8 +194,8 @@ def main():
                      help="text of y ticks")
     cli.add_argument("--ticksize", required=False, dest="ticksize", type=float, default=12,
                      help="size of ticks text")
-    cli.add_argument("--legendpos", required=False, dest="legend_pos", type=str, default=DefaultVal.auto_legend,
-                     choices=["upper left", "upper right", "bottom left", "bottom right"],
+    cli.add_argument("--legendloc", required=False, dest="legendloc", type=str, default=DefaultVal.legend,
+                     choices=[DefaultVal.legend, "best", "upper left", "upper right", "bottom left", "bottom right"],
                      help="set it to -2 if you dont want use label")
     cli.add_argument("--legendfontsize", required=False, dest="legendfontsize", type=float,
                      default=DefaultVal.legendfontsize, help="font size of legend")
@@ -184,11 +204,21 @@ def main():
     cli.add_argument("--yscale", required=False, dest="yscale", type=str, default="linear",
                      choices=["linear", "log", "symlog", "logit"], help="scale y axis")
     cli.add_argument("--tight", required=False, dest="tight", type=bool, default=True, help="tight layout of figure")
+    cli.add_argument("--vlines", required=False, dest="vlines", type=float, nargs="*",
+                     help="vlines in the figure")
+    cli.add_argument("--vlinewidth", required=False, dest="vlinewidth", type=float, nargs="*",
+                     help="line width for vines")
+    cli.add_argument("--vlinecolor", required=False, dest="vlinecolor", type=str, nargs="*",
+                     help="colors for vlines in the figure")
+    cli.add_argument("--vlinestyle", required=False, dest="vlinestyle", type=str, nargs="*",
+                     choices=list(line_style_dict.keys()),
+                     help="styles for vlines in the figure")
 
     args = cli.parse_args()
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])
     if not suffix_ok:
         args.fd_save += args.suffix
+    args.vlinestyle = [line_style_dict[vlinestyle] for vlinestyle in args.vlinestyle]
     plot_params = PlotParams(args)
     curve(json_files=args.json_files, plot_params=plot_params, close_fd=True)
     pass
