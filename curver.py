@@ -6,9 +6,11 @@ import argparse
 import json
 import os
 import sys
+from collections import defaultdict
 from typing import TextIO, List, Any
 
 import matplotlib.pyplot as plt
+from matplotlib.legend_handler import HandlerTuple
 
 
 class DefaultVal:
@@ -63,11 +65,19 @@ class PlotParams:
         self.vlinewidth = args.vlinewidth
         self.vlinecolor = args.vlinecolor
         self.vlinestyle = args.vlinestyle
+        self.vlinelabel = args.vlinelabel
 
         if not (len(self.vlines) == len(self.vlinewidth) == len(self.vlinecolor) == len(self.vlines)):
             print(f"vlines should have same number of parameters", file=sys.stderr)
             sys.exit(-1)
             pass
+        if len(self.vlinelabel) != 0 and len(self.vlinelabel) != len(self.vlines):
+            print(f"vlines should have same number of parameters", file=sys.stderr)
+            sys.exit(-1)
+
+        self.vline_label_hide = len(self.vlinelabel) == 0
+        if self.vline_label_hide:
+            self.vlinelabel = ["" for _ in range(len(self.vlines))]
 
         self.save = args.fd_save
         if os.path.isdir(self.save):
@@ -110,11 +120,13 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     fig = plt.figure()
     if plot_params.settightlayout:
         fig.set_tight_layout(True)
+    label_line = defaultdict(list)
     for json_file in json_files:
         line_params = read_gcutify(json_file=json_file, close_fd=close_fd)
-        plt.plot(line_params.guesses_list, line_params.rate_list, color=line_params.color,
-                 marker=line_params.marker, linewidth=line_params.linewidth,
-                 linestyle=line_params.linestyle, label=line_params.label)
+        line, = plt.plot(line_params.guesses_list, line_params.rate_list, color=line_params.color,
+                         marker=line_params.marker, linewidth=line_params.linewidth,
+                         linestyle=line_params.linestyle, label=line_params.label)
+        label_line[line_params.label].append(line)
     plt.xscale(plot_params.xscale)
     plt.yscale(plot_params.yscale)
     if plot_params.xlimlow != DefaultVal.limlow and plot_params.xlimhigh != DefaultVal.limhigh:
@@ -132,13 +144,19 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     if len(plot_params.xticksval) != len(DefaultVal.empty_ticks):
         plt.xticks(plot_params.xticksval, plot_params.xtickstext)
     plt.tick_params(labelsize=plot_params.ticksize)
-    for vline_x, vlinewidth, vlinecolor, vlinestyle in \
+    for vline_x, vlinewidth, vlinecolor, vlinestyle, vlinelabel in \
             zip(plot_params.vlines, plot_params.vlinewidth,
-                plot_params.vlinecolor, plot_params.vlinestyle):
-        plt.axvline(x=vline_x, linewidth=vlinewidth, color=vlinecolor, linestyle=vlinestyle)
+                plot_params.vlinecolor, plot_params.vlinestyle, plot_params.vlinelabel):
+        line = plt.axvline(x=vline_x, linewidth=vlinewidth, color=vlinecolor, linestyle=vlinestyle, label=vlinelabel)
+        if not plot_params.vline_label_hide:
+            label_line[vlinelabel].append(line)
     plt.grid(ls="--")
     if plot_params.legendloc != DefaultVal.legend:
-        plt.legend(loc=plot_params.legendloc, fontsize=plot_params.legendfontsize)
+        plt.legend([tuple(label_line[k]) for k in label_line.keys()],
+                   [label for label in label_line.keys()],
+                   loc=plot_params.legendloc,
+                   fontsize=plot_params.legendfontsize,
+                   handler_map={tuple: HandlerTuple(ndivide=None)})
     plt.savefig(plot_params.save)
     plt.close(fig)
     pass
@@ -204,15 +222,17 @@ def main():
     cli.add_argument("--yscale", required=False, dest="yscale", type=str, default="linear",
                      choices=["linear", "log", "symlog", "logit"], help="scale y axis")
     cli.add_argument("--tight", required=False, dest="tight", type=bool, default=True, help="tight layout of figure")
-    cli.add_argument("--vlines", required=False, dest="vlines", type=float, nargs="*",
+    cli.add_argument("--vlines", required=False, dest="vlines", type=float, nargs="*", default=[],
                      help="vlines in the figure")
-    cli.add_argument("--vlinewidth", required=False, dest="vlinewidth", type=float, nargs="*",
+    cli.add_argument("--vlinewidth", required=False, dest="vlinewidth", type=float, nargs="*", default=[],
                      help="line width for vines")
-    cli.add_argument("--vlinecolor", required=False, dest="vlinecolor", type=str, nargs="*",
+    cli.add_argument("--vlinecolor", required=False, dest="vlinecolor", type=str, nargs="*", default=[],
                      help="colors for vlines in the figure")
-    cli.add_argument("--vlinestyle", required=False, dest="vlinestyle", type=str, nargs="*",
+    cli.add_argument("--vlinestyle", required=False, dest="vlinestyle", type=str, nargs="*", default=[],
                      choices=list(line_style_dict.keys()),
                      help="styles for vlines in the figure")
+    cli.add_argument("--vlinelabel", required=False, dest="vlinelabel", type=str, nargs="*", default=[],
+                     help="labels for vlines in the figure. Do not set if you don't want to show these labels.")
 
     args = cli.parse_args()
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])

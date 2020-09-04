@@ -116,7 +116,8 @@ def main():
         "dot": ":"
     }
     cli = argparse.ArgumentParser("Beautify Guess-Crack result file")
-    cli.add_argument("-l", "--label", required=True, dest="label", type=str, help="how to identify this curve")
+    cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
+                     help="how to identify this curve")
     cli.add_argument("-f", "--gc", required=True, dest="fd_gc", type=argparse.FileType("r"),
                      help="guess crack file to be parsed")
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=argparse.FileType("w"),
