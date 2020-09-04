@@ -58,6 +58,7 @@ class PlotParams:
 
         self.legendloc = args.legendloc
         self.legendfontsize = args.legendfontsize
+        self.legend_handle_length = args.legend_handle_length
 
         self.settightlayout = args.tight
 
@@ -154,6 +155,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     if plot_params.legendloc != DefaultVal.legend:
         plt.legend([tuple(label_line[k]) for k in label_line.keys()],
                    [label for label in label_line.keys()],
+                   handlelength=plot_params.legend_handle_length,
                    loc=plot_params.legendloc,
                    fontsize=plot_params.legendfontsize,
                    handler_map={tuple: HandlerTuple(ndivide=None)})
@@ -217,6 +219,8 @@ def main():
                      help="set it to -2 if you dont want use label")
     cli.add_argument("--legendfontsize", required=False, dest="legendfontsize", type=float,
                      default=DefaultVal.legendfontsize, help="font size of legend")
+    cli.add_argument("--legendhandlelength", required=False, dest="legend_handle_length", type=float, default=2,
+                     help="legend handle length")
     cli.add_argument("--xscale", required=False, dest="xscale", type=str, default="log",
                      choices=["linear", "log", "symlog", "logit"], help="scale x axis")
     cli.add_argument("--yscale", required=False, dest="yscale", type=str, default="linear",
