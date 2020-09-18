@@ -34,12 +34,29 @@ pwd | prob(optional) | appearance | guess_number | cracked_num | cracked_ratio
 ### outputs
 Removed invalid passwords (unprintable ASCII, too short length, etc.) will be saved if any.
 
-## 3. gcutify.py
+## 3. gutify.py
 
 ### usage
 
-The usage of gcutify is to some extent a long story, so you'd better
- type in "./gcutify.py -h" in shell and see help info.
+The usage of gutify is to some extent a long story.
+
+**Required**
+- -f: Guess number and cracked number stored here
+- -s: Save results here
+- -t: Testing set will be used to obtain its size
+
+**Optional for -f**
+- --gc-split: How to split items of a line in guess number and cracked number file
+- --idx-guess: guess number is at idx-guess, start from 0
+- --idx-crack: cracked number is at idx-crack, start from 0
+
+**Optional for line style**
+- --upper: Max guess number
+- --lower: Min guess number
+- --color: Color of the line
+- --line-style: solid, dash, dot, or dot_dash
+- --marker: the marker on the line
+- --line-width: the width of the line
 
 ### outputs
 
