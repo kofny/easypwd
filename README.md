@@ -82,6 +82,7 @@ _ cracked_list
 - -s: save the picture here, should be a path can be accessed
 **Optional for saved file**
 - --suffix: can be .pdf or .png
+
 **Optional for label**
 - -x: what does x axis mean
 - -y: what does y axis mean
