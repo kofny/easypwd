@@ -124,3 +124,38 @@ If you want some additional functions, rewrite it.
 
 ### outputs
 A picture
+
+## 5. datacleaning.py
+filter valid passwords from a dataset.
+
+### usage
+- -d: a dataset, one password per line
+- -o: output, save filtered passwords here
+- -p: RegEx to filter valid passwords
+
+### output
+Filtered passwords, a password per line.
+
+## 6. minrank.py
+Min_auto from existing guess-number-and-cracked-number results.
+
+### usage
+- -t: testing set
+- -m: scored results for the testing set
+- -s: save Min_auto here
+- --split: how to split a line in scored results
+
+### output
+Min_auto
+
+## 7. hashkitty.py
+Convert pwd:guess number file generated 
+by hashcat debug mode to my format.
+
+### usage
+- -r: hashcat result file, format plainpwd:crack_pos
+- -t: testing set for hashcat result
+- -s: save converted result here
+
+### output
+hashcat result in my format
