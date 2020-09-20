@@ -2,7 +2,6 @@
 Get Distribution of Length, Characters
 """
 import argparse
-import json
 import sys
 from collections import defaultdict
 from typing import TextIO, Dict
