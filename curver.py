@@ -24,51 +24,51 @@ class DefaultVal:
 class PlotParams:
     def __init__(self, args: Any):
         self.xlabel = args.xlabel
-        self.xlabelweight = args.xlabelweight
-        self.xlabelsize = args.xlabelsize
+        self.xlabel_weight = args.xlabel_weight
+        self.xlabel_size = args.xlabel_size
 
         self.ylabel = args.ylabel
-        self.ylabelweight = args.ylabelweight
-        self.ylabelsize = args.ylabelsize
+        self.ylabel_weight = args.ylabel_weight
+        self.ylabel_size = args.ylabel_size
 
-        self.xlimlow = args.xlimlow
-        self.xlimhigh = args.xlimhigh
+        self.xlim_low = args.xlim_low
+        self.xlim_high = args.xlim_high
 
-        self.ylimlow = args.ylimlow
-        self.ylimhigh = args.ylimhigh
+        self.ylim_low = args.ylim_low
+        self.ylim_high = args.ylim_high
 
-        self.xticksval = args.xticksval
-        self.xtickstext = args.xtickstext
+        self.xticks_val = args.xticks_val
+        self.xticks_text = args.xticks_text
 
-        if len(self.xticksval) != len(self.xtickstext):
-            print(f"{self.xticksval} does not match {self.xtickstext}", file=sys.stderr)
+        if len(self.xticks_val) != len(self.xticks_text):
+            print(f"{self.xticks_val} does not match {self.xticks_text}", file=sys.stderr)
             sys.exit(-1)
 
-        self.yticksval = args.yticksval
-        self.ytickstext = args.ytickstext
+        self.yticks_val = args.yticks_val
+        self.yticks_text = args.yticks_text
 
-        if len(self.yticksval) != len(self.ytickstext):
-            print(f"{self.yticksval} does not match {self.ytickstext}", file=sys.stderr)
+        if len(self.yticks_val) != len(self.yticks_text):
+            print(f"{self.yticks_val} does not match {self.yticks_text}", file=sys.stderr)
             sys.exit(-1)
 
-        self.ticksize = args.ticksize
+        self.tick_size = args.tick_size
 
         self.xscale = args.xscale
         self.yscale = args.yscale
 
-        self.legendloc = args.legendloc
-        self.legendfontsize = args.legendfontsize
+        self.legend_loc = args.legend_loc
+        self.legend_fontsize = args.legend_fontsize
         self.legend_handle_length = args.legend_handle_length
 
-        self.settightlayout = args.tight
+        self.set_tight_layout = args.tight
 
         self.vlines = args.vlines
-        self.vlinewidth = args.vlinewidth
-        self.vlinecolor = args.vlinecolor
-        self.vlinestyle = args.vlinestyle
-        self.vlinelabel = args.vlinelabel
+        self.vline_width = args.vline_width
+        self.vline_color = args.vline_color
+        self.vline_style = args.vline_style
+        self.vline_label = args.vline_label
 
-        if not (len(self.vlines) == len(self.vlinewidth) == len(self.vlinecolor) == len(self.vlines)):
+        if not (len(self.vlines) == len(self.vline_width) == len(self.vline_color) == len(self.vlines)):
             print(f"vlines should have same number of parameters", file=sys.stderr)
             sys.exit(-1)
             pass
@@ -97,7 +97,7 @@ class LineParam:
         self.label = label
 
 
-def read_gcutify(json_file: TextIO, close_fd: bool):
+def read_gutify(json_file: TextIO, close_fd: bool):
     data = json.load(json_file)
     guesses_list = data["guesses_list"]
     cracked_list = data["cracked_list"]
@@ -119,45 +119,46 @@ def read_gcutify(json_file: TextIO, close_fd: bool):
 
 def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = True):
     fig = plt.figure()
-    if plot_params.settightlayout:
+    if plot_params.set_tight_layout:
         fig.set_tight_layout(True)
     label_line = defaultdict(list)
     for json_file in json_files:
-        line_params = read_gcutify(json_file=json_file, close_fd=close_fd)
+        line_params = read_gutify(json_file=json_file, close_fd=close_fd)
         line, = plt.plot(line_params.guesses_list, line_params.rate_list, color=line_params.color,
                          marker=line_params.marker, linewidth=line_params.linewidth,
                          linestyle=line_params.linestyle, label=line_params.label)
         label_line[line_params.label].append(line)
     plt.xscale(plot_params.xscale)
     plt.yscale(plot_params.yscale)
-    if plot_params.xlimlow != DefaultVal.limlow and plot_params.xlimhigh != DefaultVal.limhigh:
-        plt.xlim([plot_params.xlimlow, plot_params.xlimhigh])
-    if plot_params.ylimlow != DefaultVal.limlow and plot_params.ylimhigh != DefaultVal.limhigh:
-        plt.ylim([plot_params.ylimlow, plot_params.ylimhigh])
+    if plot_params.xlim_low != DefaultVal.limlow and plot_params.xlim_high != DefaultVal.limhigh:
+        plt.xlim([plot_params.xlim_low, plot_params.xlim_high])
+    if plot_params.ylim_low != DefaultVal.limlow and plot_params.ylim_high != DefaultVal.limhigh:
+        plt.ylim([plot_params.ylim_low, plot_params.ylim_high])
     plt.xlabel(xlabel=plot_params.xlabel,
-               fontdict={"weight": plot_params.xlabelweight,
-                         "size": plot_params.xlabelsize})
+               fontdict={"weight": plot_params.xlabel_weight,
+                         "size": plot_params.xlabel_size})
     plt.ylabel(ylabel=plot_params.ylabel,
-               fontdict={"weight": plot_params.ylabelweight,
-                         "size": plot_params.ylabelsize})
-    if len(plot_params.yticksval) != len(DefaultVal.empty_ticks):
-        plt.yticks(plot_params.yticksval, plot_params.ytickstext)
-    if len(plot_params.xticksval) != len(DefaultVal.empty_ticks):
-        plt.xticks(plot_params.xticksval, plot_params.xtickstext)
-    plt.tick_params(labelsize=plot_params.ticksize)
-    for vline_x, vlinewidth, vlinecolor, vlinestyle, vlinelabel in \
-            zip(plot_params.vlines, plot_params.vlinewidth,
-                plot_params.vlinecolor, plot_params.vlinestyle, plot_params.vlinelabel):
-        line = plt.axvline(x=vline_x, linewidth=vlinewidth, color=vlinecolor, linestyle=vlinestyle, label=vlinelabel)
+               fontdict={"weight": plot_params.ylabel_weight,
+                         "size": plot_params.ylabel_size})
+    if len(plot_params.yticks_val) != len(DefaultVal.empty_ticks):
+        plt.yticks(plot_params.yticks_val, plot_params.yticks_text)
+    if len(plot_params.xticks_val) != len(DefaultVal.empty_ticks):
+        plt.xticks(plot_params.xticks_val, plot_params.xticks_text)
+    plt.tick_params(labelsize=plot_params.tick_size)
+    for vline_x, vline_width, vline_color, vline_style, vline_label in \
+            zip(plot_params.vlines, plot_params.vline_width,
+                plot_params.vline_color, plot_params.vline_style, plot_params.vlinelabel):
+        line = plt.axvline(x=vline_x, linewidth=vline_width, color=vline_color, linestyle=vline_style,
+                           label=vline_label)
         if not plot_params.vline_label_hide:
-            label_line[vlinelabel].append(line)
+            label_line[vline_label].append(line)
     plt.grid(ls="--")
-    if plot_params.legendloc != DefaultVal.legend:
+    if plot_params.legend_loc != DefaultVal.legend:
         plt.legend([tuple(label_line[k]) for k in label_line.keys()],
                    [label for label in label_line.keys()],
                    handlelength=plot_params.legend_handle_length,
-                   loc=plot_params.legendloc,
-                   fontsize=plot_params.legendfontsize,
+                   loc=plot_params.legend_loc,
+                   fontsize=plot_params.legend_fontsize,
                    handler_map={tuple: HandlerTuple(ndivide=None)})
     plt.savefig(plot_params.save)
     plt.close(fig)
@@ -184,42 +185,42 @@ def main():
                      help="what does x axis mean")
     cli.add_argument("-y", "--ylabel", required=False, dest="ylabel", type=str, default="Cracked",
                      help="what does y axis mean")
-    cli.add_argument("--xlabelweight", required=False, dest="xlabelweight", type=str, default="normal",
+    cli.add_argument("--xlabel-weight", required=False, dest="xlabel_weight", type=str, default="normal",
                      choices=["normal", "bold"], help="weight of x label")
-    cli.add_argument("--ylabelweight", required=False, dest="ylabelweight", type=str, default="normal",
+    cli.add_argument("--ylabel-weight", required=False, dest="ylabel_weight", type=str, default="normal",
                      choices=["normal", "bold"], help="weight of y label")
-    cli.add_argument("--xlabelsize", required=False, dest="xlabelsize", type=float, default=12,
+    cli.add_argument("--xlabel-size", required=False, dest="xlabel_size", type=float, default=12,
                      help="size of x label")
-    cli.add_argument("--ylabelsize", required=False, dest="ylabelsize", type=float, default=12,
+    cli.add_argument("--ylabel-size", required=False, dest="ylabel_size", type=float, default=12,
                      help="size of y label")
-    cli.add_argument("--xlimlow", required=False, dest="xlimlow", type=float, default=DefaultVal.limlow,
+    cli.add_argument("--xlim-low", required=False, dest="xlim_low", type=float, default=DefaultVal.limlow,
                      help="lower bound of x")
-    cli.add_argument("--xlimhigh", required=False, dest="xlimhigh", type=float, default=DefaultVal.limhigh,
+    cli.add_argument("--xlim-high", required=False, dest="xlim_high", type=float, default=DefaultVal.limhigh,
                      help="upper bound of x")
-    cli.add_argument("--ylimlow", required=False, dest="ylimlow", type=float, default=DefaultVal.limlow,
+    cli.add_argument("--ylim-low", required=False, dest="ylim_low", type=float, default=DefaultVal.limlow,
                      help="lower bound of y")
-    cli.add_argument("--ylimhigh", required=False, dest="ylimhigh", type=float, default=DefaultVal.limhigh,
+    cli.add_argument("--ylim-high", required=False, dest="ylim_high", type=float, default=DefaultVal.limhigh,
                      help="upper bound of y")
-    cli.add_argument("--xticksval", required=False, dest="xticksval", nargs="+", type=float,
+    cli.add_argument("--xticks-val", required=False, dest="xtick_sval", nargs="+", type=float,
                      default=DefaultVal.empty_ticks,
                      help="value of x ticks")
-    cli.add_argument("--xtickstext", required=False, dest="xtickstext", nargs="+", type=float,
+    cli.add_argument("--xticks-text", required=False, dest="xticks_text", nargs="+", type=float,
                      default=DefaultVal.empty_ticks,
                      help="text of x ticks")
-    cli.add_argument("--yticksval", required=False, dest="yticksval", nargs="+", type=float,
+    cli.add_argument("--yticks-val", required=False, dest="yticks_val", nargs="+", type=float,
                      default=DefaultVal.empty_ticks,
                      help="value of y ticks")
-    cli.add_argument("--ytickstext", required=False, dest="ytickstext", nargs="+", type=float,
+    cli.add_argument("--yticks-text", required=False, dest="yticks_text", nargs="+", type=float,
                      default=DefaultVal.empty_ticks,
                      help="text of y ticks")
-    cli.add_argument("--ticksize", required=False, dest="ticksize", type=float, default=12,
+    cli.add_argument("--tick-size", required=False, dest="tick_size", type=float, default=12,
                      help="size of ticks text")
-    cli.add_argument("--legendloc", required=False, dest="legendloc", type=str, default=DefaultVal.legend,
+    cli.add_argument("--legend-loc", required=False, dest="legend_loc", type=str, default=DefaultVal.legend,
                      choices=[DefaultVal.legend, "best", "upper left", "upper right", "bottom left", "bottom right"],
                      help="set it to -2 if you dont want use label")
-    cli.add_argument("--legendfontsize", required=False, dest="legendfontsize", type=float,
+    cli.add_argument("--legend-fontsize", required=False, dest="legend_fontsize", type=float,
                      default=DefaultVal.legendfontsize, help="font size of legend")
-    cli.add_argument("--legendhandlelength", required=False, dest="legend_handle_length", type=float, default=2,
+    cli.add_argument("--legend-handle-length", required=False, dest="legend_handle_length", type=float, default=2,
                      help="legend handle length")
     cli.add_argument("--xscale", required=False, dest="xscale", type=str, default="log",
                      choices=["linear", "log", "symlog", "logit"], help="scale x axis")
@@ -228,14 +229,14 @@ def main():
     cli.add_argument("--tight", required=False, dest="tight", type=bool, default=True, help="tight layout of figure")
     cli.add_argument("--vlines", required=False, dest="vlines", type=float, nargs="*", default=[],
                      help="vlines in the figure")
-    cli.add_argument("--vlinewidth", required=False, dest="vlinewidth", type=float, nargs="*", default=[],
+    cli.add_argument("--vline-width", required=False, dest="vline_width", type=float, nargs="*", default=[],
                      help="line width for vines")
-    cli.add_argument("--vlinecolor", required=False, dest="vlinecolor", type=str, nargs="*", default=[],
+    cli.add_argument("--vline-color", required=False, dest="vline_color", type=str, nargs="*", default=[],
                      help="colors for vlines in the figure")
-    cli.add_argument("--vlinestyle", required=False, dest="vlinestyle", type=str, nargs="*", default=[],
+    cli.add_argument("--vline-style", required=False, dest="vline_style", type=str, nargs="*", default=[],
                      choices=list(line_style_dict.keys()),
                      help="styles for vlines in the figure")
-    cli.add_argument("--vlinelabel", required=False, dest="vlinelabel", type=str, nargs="*", default=[],
+    cli.add_argument("--vline-label", required=False, dest="vline_label", type=str, nargs="*", default=[],
                      help="labels for vlines in the figure. Do not set if you don't want to show these labels.")
 
     args = cli.parse_args()
