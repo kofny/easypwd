@@ -64,10 +64,13 @@ def texify(columns: List[List[str]], top: float, percentage: bool, cnt: int, ski
         for i, idx in enumerate(indices):
             if i < skip:
                 continue
+            s = column[idx]
+            if len(s) > 2 and s.endswith("@@"):
+                s = s[:len(s) - 2] + "<w>"
             if conv:
-                table[i - skip].append(conv_latex(column[idx]))
+                table[i - skip].append(conv_latex(s))
             else:
-                table[i - skip].append(column[idx])
+                table[i - skip].append(s)
         pass
     return table
 
