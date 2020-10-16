@@ -226,7 +226,7 @@ def main():
                      choices=["linear", "log", "symlog", "logit"], help="scale x axis")
     cli.add_argument("--yscale", required=False, dest="yscale", type=str, default="linear",
                      choices=["linear", "log", "symlog", "logit"], help="scale y axis")
-    cli.add_argument("--tight", required=False, dest="tight", type=bool, default=False, action="store_true",
+    cli.add_argument("--tight", required=False, dest="tight", default=False, action="store_true",
                      help="tight layout of figure")
     cli.add_argument("--vlines", required=False, dest="vlines", type=float, nargs="*", default=[],
                      help="vlines in the figure")
