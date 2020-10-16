@@ -97,10 +97,11 @@ def main():
     cli = argparse.ArgumentParser("Table Generator")
     cli.add_argument("-f", "--files", required=True, nargs="+", type=argparse.FileType("r"), help="files")
     cli.add_argument("-u", "--universe", required=True, type=float, help="top lines")
-    cli.add_argument("--percentage", required=False, default=False, help="--universe is percentage")
+    cli.add_argument("--percentage", required=False, default=False, type=bool, action="store_true",
+                     help="--universe is percentage")
     cli.add_argument("-n", "--sample-n", required=True, type=int, help="sample n items averagely")
     cli.add_argument("-k", "--skip", required=False, default=1, type=int, help="skip first k items")
-    cli.add_argument("--latex", required=False, default=True, type=bool, help="latex format")
+    cli.add_argument("--latex", required=False, default=False, type=bool, action="store_false", help="latex format")
     cli.add_argument("-o", "--output", required=False, default=sys.stdout, type=argparse.FileType("w"),
                      help="save table")
     args = cli.parse_args()
