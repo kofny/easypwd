@@ -86,26 +86,26 @@ _ cracked_list
 **Optional for label**
 - -x: what does x axis mean
 - -y: what does y axis mean
-- --xlabelweight: normal, bold
-- --ylabelweight: normal, bold
-- --xlabelsize: font size of x label
-- --ylabelsize: font size of y label
+- --xlabel-weight: normal, bold
+- --ylabel-weight: normal, bold
+- --xlabel-size: font size of x label
+- --ylabel-size: font size of y label
 
 **Optional for axis**
-- --xlimlow: x value less than this will not be displayed
-- --xlimhigh: x value larger than this will not be displayed
-- --ylimlow: y value less than this will not be displayed
-- --ylimhigh: y value larger than this will not be displayed
-- --xticksval: ticks for x axis
-- --xtickstext: text for x axis, may use $10^{2}$ to represent 100
-- --yticksval: ticks for y axis
-- --yticksval: text for y axis
-- --ticksize: font size of ticks
+- --xlim-low: x value less than this will not be displayed
+- --xlim-high: x value larger than this will not be displayed
+- --ylim-low: y value less than this will not be displayed
+- --ylim-high: y value larger than this will not be displayed
+- --xticks-val: ticks for x axis
+- --xticks-text: text for x axis, may use $10^{2}$ to represent 100
+- --yticks-val: ticks for y axis
+- --yticks-val: text for y axis
+- --tick-size: font size of ticks
 
 **Optional for legend**
-- --legendloc: where you put the legend
-- --legendfontsize: font size of legend
-- --legendhandlelength: length of legend handle, i.e., figure corresponding to text in legend
+- --legend-loc: where you put the legend
+- --legend-fontsize: font size of legend
+- --legend-handle-length: length of legend handle, i.e., figure corresponding to text in legend
 
 **Optional for figure**
 - --xscale: linear, log, symlog, logit
@@ -114,10 +114,10 @@ _ cracked_list
 
 **Optional for vlines**
 - --vlines: x value for vlines
-- --vlinewidth: line width for vlines
-- --vlinecolor: colors for vlines
-- --vlinestyle: solid, dash, dot, dot_dash for vlines
-- --vlinelabel: labels for vlines. set it to empty if you dont need
+- --vline-width: line width for vlines
+- --vline-color: colors for vlines
+- --vline-style: solid, dash, dot, dot_dash for vlines
+- --vline-label: labels for vlines. set it to empty if you dont need
 
 This is a relatively easy utils to draw curves.
 
