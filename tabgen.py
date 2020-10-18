@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Generate table for LaTeX
 """
@@ -104,7 +105,7 @@ def main():
                      help="--universe is percentage")
     cli.add_argument("-n", "--sample-n", required=True, type=int, help="sample n items averagely")
     cli.add_argument("-k", "--skip", required=False, default=1, type=int, help="skip first k items")
-    cli.add_argument("--latex", required=False, default=False, action="store_false", help="latex format")
+    cli.add_argument("--latex", required=False, default=False, action="store_true", help="latex format")
     cli.add_argument("-o", "--output", required=False, default=sys.stdout, type=argparse.FileType("w"),
                      help="save table")
     args = cli.parse_args()

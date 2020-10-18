@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This is a Monte Carlo Simulator.
 What we need is just sampled probabilities and scored target set

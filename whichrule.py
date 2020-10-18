@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 hashcat --debug-mode 3 or 4 will output origin-word and corresponding rule,
 this code is to count how many passwords are cracked by a rule

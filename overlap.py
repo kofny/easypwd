@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 A and B have the same passwords, and this file is helpful to find them.
 """
