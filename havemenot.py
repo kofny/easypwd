@@ -9,7 +9,7 @@ from typing import Dict, TextIO, Tuple
 
 def diff(testing_set: Dict[str, int], training_set: Dict[str, int]) -> Dict[str, int]:
     keys_in_testing_not_in_training = testing_set.keys() - training_set.keys()
-    testing_set_only = {k: v for k, v in testing_set if k in keys_in_testing_not_in_training}
+    testing_set_only = {k: v for k, v in testing_set.items() if k in keys_in_testing_not_in_training}
     return testing_set_only
 
 
@@ -37,11 +37,11 @@ def main():
     args = cli.parse_args()
     training_set, testing_set = read_sets(training=args.training, testing=args.testing)
     testing_only = diff(testing_set=testing_set, training_set=training_set)
-    for pwd, cnt in testing_only:
+    for pwd, cnt in testing_only.items():
         s = f"{pwd}\n"
-        for _ in cnt:
-            args.out.write(s)
-    args.out.close()
+        for _ in range(cnt):
+            args.save.write(s)
+    args.save.close()
     pass
 
 
