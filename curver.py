@@ -73,13 +73,13 @@ class PlotParams:
             print(f"vlines should have same number of parameters", file=sys.stderr)
             sys.exit(-1)
             pass
-        if len(self.vlinelabel) != 0 and len(self.vlinelabel) != len(self.vlines):
+        if len(self.vline_label) != 0 and len(self.vline_label) != len(self.vlines):
             print(f"vlines should have same number of parameters", file=sys.stderr)
             sys.exit(-1)
 
-        self.vline_label_hide = len(self.vlinelabel) == 0
+        self.vline_label_hide = len(self.vline_label) == 0
         if self.vline_label_hide:
-            self.vlinelabel = ["" for _ in range(len(self.vlines))]
+            self.vline_label = ["" for _ in range(len(self.vlines))]
 
         self.save = args.fd_save
         if os.path.isdir(self.save):
@@ -148,7 +148,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     plt.tick_params(labelsize=plot_params.tick_size)
     for vline_x, vline_width, vline_color, vline_style, vline_label in \
             zip(plot_params.vlines, plot_params.vline_width,
-                plot_params.vline_color, plot_params.vline_style, plot_params.vlinelabel):
+                plot_params.vline_color, plot_params.vline_style, plot_params.vline_label):
         line = plt.axvline(x=vline_x, linewidth=vline_width, color=vline_color, linestyle=vline_style,
                            label=vline_label)
         if not plot_params.vline_label_hide:
@@ -202,7 +202,7 @@ def main():
                      help="lower bound of y")
     cli.add_argument("--ylim-high", required=False, dest="ylim_high", type=float, default=DefaultVal.limhigh,
                      help="upper bound of y")
-    cli.add_argument("--xticks-val", required=False, dest="xtick_sval", nargs="+", type=float,
+    cli.add_argument("--xticks-val", required=False, dest="xticks_val", nargs="+", type=float,
                      default=DefaultVal.empty_ticks,
                      help="value of x ticks")
     cli.add_argument("--xticks-text", required=False, dest="xticks_text", nargs="+", type=float,
