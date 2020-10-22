@@ -245,7 +245,7 @@ def main():
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])
     if not suffix_ok:
         args.fd_save += args.suffix
-    args.vlinestyle = [line_style_dict[vlinestyle] for vlinestyle in args.vlinestyle]
+    args.vline_style = [line_style_dict[vline_style] for vline_style in args.vline_style]
     plot_params = PlotParams(args)
     curve(json_files=args.json_files, plot_params=plot_params, close_fd=True)
     pass
