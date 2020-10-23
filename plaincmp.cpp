@@ -4,20 +4,27 @@
 
 #include "plaincmp.h"
 
-void split(const std::string &s, std::vector<std::string> &tokens, char delim = ' ') {
+/**
+ * find substring split by delimiter
+ *
+ * @param s  string to be split
+ * @param tokens substring split from the string {@code s}
+ * @param delimiter the bound of the substrings
+ */
+void split(const std::string &s, std::vector<std::string> &tokens, char delimiter = ' ') {
     tokens.clear();
-    auto string_find_first_not = [s, delim](size_t pos = 0) -> size_t {
+    auto string_find_first_not = [s, delimiter](size_t pos = 0) -> size_t {
         for (size_t i = pos; i < s.size(); i++) {
-            if (s[i] != delim) return i;
+            if (s[i] != delimiter) return i;
         }
         return std::string::npos;
     };
     size_t lastPos = string_find_first_not(0);
-    size_t pos = s.find(delim, lastPos);
+    size_t pos = s.find(delimiter, lastPos);
     while (lastPos != std::string::npos) {
         tokens.emplace_back(s.substr(lastPos, pos - lastPos));
         lastPos = string_find_first_not(pos);
-        pos = s.find(delim, lastPos);
+        pos = s.find(delimiter, lastPos);
     }
 }
 
@@ -29,8 +36,8 @@ void split(const std::string &s, std::vector<std::string> &tokens, char delim = 
 inline std::string &rm_nl(std::string &line) {
     auto idx4r = line.find('\r');
     if (idx4r != std::string::npos) {
-        std::string &nline = line.replace(idx4r, idx4r + 1, "");
-        return nline;
+        std::string &n_line = line.replace(idx4r, idx4r + 1, "");
+        return n_line;
     } else {
         return line;
     }
@@ -48,8 +55,8 @@ int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
     return 0;
 }
 
-int plain_cmp(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &tar_pwd_list,
-              std::string &splitter, char delim, bool with_prob) {
+int plain_cmp(std::ifstream &guesses_file, std::ofstream &f_out, std::ifstream &tar_pwd_list,
+              std::string &splitter, char delimiter, bool with_prob, bool forget) {
     std::string line;
     TargetsCount targetsCount;
     read_targets(tar_pwd_list, targetsCount);
@@ -65,13 +72,12 @@ int plain_cmp(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &t
             tqdm::tqdm(cur);
         }
         cur++;
-        guesses += 1;
         line = rm_nl(line);
         std::string pwd = line;
         std::string log_prob;
         if (with_prob) {
             auto tokens = std::vector<std::string>();
-            split(line, tokens, delim);
+            split(line, tokens, delimiter);
             if (tokens.size() != 2) {
                 fprintf(stderr, "%s is not the format of (pwd   log_prob)\n", line.c_str());
                 std::exit(-1);
@@ -79,21 +85,25 @@ int plain_cmp(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &t
             pwd = tokens[0];
             log_prob = tokens[1];
         }
-        if (targetsCount.find(pwd) != targetsCount.end() && targetsCount.at(pwd) > 0) {
-            int pwd_freq = targetsCount.at(pwd);
-            cracked += pwd_freq;
-            targetsCount.at(pwd) = 0;
-            if (with_prob) {
-                fout << pwd << splitter << log_prob << splitter << pwd_freq << splitter
-                     << guesses << splitter << cracked << splitter
-                     << std::setiosflags(std::ios::fixed) << std::setprecision(2)
-                     << ((double) cracked / total_targets * 100) << "\n";
-            } else {
-                fout << pwd << splitter << pwd_freq << splitter
-                     << guesses << splitter << cracked << splitter
-                     << std::setiosflags(std::ios::fixed) << std::setprecision(2)
-                     << ((double) cracked / total_targets * 100) << "\n";
-            }
+        guesses++;
+        if (targetsCount.find(pwd) == targetsCount.end()) { continue; }
+        if (targetsCount.at(pwd) <= 0) {
+            if (forget) guesses--;
+            continue;
+        }
+        int pwd_freq = targetsCount.at(pwd);
+        cracked += pwd_freq;
+        targetsCount.at(pwd) = 0;
+        if (with_prob) {
+            f_out << pwd << splitter << log_prob << splitter << pwd_freq << splitter
+                  << guesses << splitter << cracked << splitter
+                  << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+                  << ((double) cracked / total_targets * 100) << "\n";
+        } else {
+            f_out << pwd << splitter << pwd_freq << splitter
+                  << guesses << splitter << cracked << splitter
+                  << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+                  << ((double) cracked / total_targets * 100) << "\n";
         }
     }
     std::cerr << "                                                \n";
@@ -103,11 +113,12 @@ int plain_cmp(std::ifstream &guesses_file, std::ofstream &fout, std::ifstream &t
 
 int main(int argc, char *argv[]) {
     std::ifstream guesses_file;
-    std::ofstream fout;
+    std::ofstream f_out;
     std::ifstream tar_pwd_list;
     std::string splitter("\t");
-    char delim = '\t';
+    char delimiter = '\t';
     bool with_prob = false;
+    bool forget = false;
     auto cli = ((clipp::required("-i", "--guesses") &
                  clipp::value("input, pair of (pwd, log_prob)").call([&](const std::string &f) {
                      guesses_file.open(f, std::ios::in);
@@ -118,8 +129,8 @@ int main(int argc, char *argv[]) {
                  })),
             (clipp::required("-o", "--output") &
              clipp::value("output").call([&](const std::string &f) {
-                 fout.open(f, std::ios::out);
-                 if (!fout.is_open()) {
+                 f_out.open(f, std::ios::out);
+                 if (!f_out.is_open()) {
                      std::cerr << "cannot open output file " << f << std::endl;
                      std::exit(-1);
                  }
@@ -132,35 +143,41 @@ int main(int argc, char *argv[]) {
                 }
             })),
             (clipp::option("-s", "--split4output") & clipp::value("guesses: cracked", splitter)),
-            (clipp::option("-d", "--delim4guesses") & clipp::value("guesses log_prob", delim)),
-            (clipp::option("-p", "--with-prob").set(with_prob, true))
+            (clipp::option("-d", "--delimiter4guesses") & clipp::value("guesses log_prob", delimiter)),
+            (clipp::option("-p", "--with-prob").set(with_prob, true)),
+            (clipp::option("--forget").set(forget, true).label(
+                    "The same guess in the guesses file will be ignored and has no impact on guess number"))
     );
-
+    if (forget) {
+        std::cerr << "Caution!\n"
+                  << "Make sure that you know the meaning of the flag \"--forget\"!"
+                  << std::endl;
+    }
     if (clipp::parse(argc, argv, cli)) {
         std::string line;
         getline(guesses_file, line);
         guesses_file.seekg(0, std::ios::beg);
         if (with_prob) {
             std::cout << "Mode: pwd & prob\n"
-                      << "Delim: \"" << delim << "\"" << std::endl;
-            if (line.find(delim) == std::string::npos) {
-                std::cerr << "Cannot find \"" << delim
+                      << "Delimiter: \"" << delimiter << "\"" << std::endl;
+            if (line.find(delimiter) == std::string::npos) {
+                std::cerr << "Cannot find \"" << delimiter
                           << "\", your line should in format of (pwd    prob),"
                              " re-check please!" << std::endl;
                 std::exit(-1);
             }
         } else {
-            if (line.find(delim) != std::string::npos) {
-                std::cerr << "WARNING: guesses file contains \"" << delim
+            if (line.find(delimiter) != std::string::npos) {
+                std::cerr << "WARNING: guesses file contains \"" << delimiter
                           << R"(", however, you are in "pwd only" mode)" << std::endl;
             }
             std::cout << "Mode: pwd only\n";
         }
         std::cout << "Splitter: \"" << splitter << "\"" << std::endl;
-        plain_cmp(guesses_file, fout, tar_pwd_list, splitter, delim, with_prob);
+        plain_cmp(guesses_file, f_out, tar_pwd_list, splitter, delimiter, with_prob, forget);
         guesses_file.close();
-        fout.flush();
-        fout.close();
+        f_out.flush();
+        f_out.close();
         tar_pwd_list.close();
         std::cout << "Done!" << std::endl;
     } else {

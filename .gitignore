@@ -136,3 +136,4 @@ dmypy.json
 *.pdf
 *.png
 !assets/matplotlib_colors.png
+plaincmp

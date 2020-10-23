@@ -34,10 +34,15 @@ def main():
     cli.add_argument("-s", "--src", dest="training", required=True, type=argparse.FileType('r'), help="training set")
     cli.add_argument("-t", "--tar", dest="testing", required=True, type=argparse.FileType('r'), help="training set")
     cli.add_argument("-o", "--out", dest="save", required=True, type=argparse.FileType('w'), help="save results")
+    cli.add_argument("-m", "--minimal", dest="min_len", required=False, type=int, default=1,
+                     help="passwords less than (not equal to) this will be ignored")
     args = cli.parse_args()
     training_set, testing_set = read_sets(training=args.training, testing=args.testing)
     testing_only = diff(testing_set=testing_set, training_set=training_set)
+    min_len = max(1, args.min_len)
     for pwd, cnt in testing_only.items():
+        if len(pwd) < min_len:
+            continue
         s = f"{pwd}\n"
         for _ in range(cnt):
             args.save.write(s)
