@@ -31,7 +31,7 @@ def hcgood(pwd_pos: Dict[str, int], pwd_cnt: Dict[str, int]):
     total = sum(pwd_cnt.values())
     pwd_cnt_pos_list = []
     for pwd, cnt in pwd_cnt.items():
-        crack_pos = pwd_pos.get(pwd, sys.maxsize)
+        crack_pos = pwd_pos.get(pwd, sys.float_info.max)
         pwd_cnt_pos_list.append((pwd, cnt, crack_pos))
     del pwd_cnt
     del pwd_pos

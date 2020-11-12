@@ -38,7 +38,7 @@ def main():
     cli.add_argument("--rank-idx", dest="rank_idx", required=False, type=int, default=1,
                      help="which column stores the rank, start from 0")
     cli.add_argument("--prob-idx", dest="prob_idx", required=False, type=int, default=-1,
-                    help="which column stores the prob, start from 0, set -1 to ignore prob")
+                     help="which column stores the prob, start from 0, set -1 to ignore prob")
     args = cli.parse_args()
     conv(args.ranked, save2=args.save, skip_lines=args.skip, pwd_idx=args.pwd_idx, rank_idx=args.rank_idx)
 

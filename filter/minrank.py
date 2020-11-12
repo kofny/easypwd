@@ -12,7 +12,7 @@ def init_targets(targets: TextIO):
     for line in targets:
         line = line.strip("\r\n")
         num, _ = pwd_rank.get(line, (0, 0))
-        pwd_rank[line] = (num + 1, sys.maxsize)
+        pwd_rank[line] = (num + 1, sys.float_info.max)
     return pwd_rank
 
 
