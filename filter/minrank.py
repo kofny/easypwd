@@ -25,6 +25,8 @@ def read_scored(scored: TextIO, splitter: str):
 
 def parse_rank(pwd_rank: Dict, model_rank: Generator):
     for pwd, rank in model_rank:
+        if pwd not in pwd_rank:
+            continue
         num, origin_rank = pwd_rank[pwd]
         if rank < origin_rank:
             pwd_rank[pwd] = (num, rank)

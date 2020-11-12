@@ -6,7 +6,18 @@ This is a method to beautify the data of guesses and cracked file
 import argparse
 import json
 import sys
+from collections import defaultdict
 from typing import TextIO, Tuple, Callable
+
+
+def count_test_set(file: TextIO, close_fd: bool = False):
+    count = defaultdict(int)
+    for line in file:
+        line = line.strip("\r\n")
+        count[line] += 1
+    if close_fd:
+        file.close()
+    return count
 
 
 def wc_l(file: TextIO, close_fd: bool = False):
@@ -36,31 +47,11 @@ def wc_l(file: TextIO, close_fd: bool = False):
     return count
 
 
-def default_key(line: str):
-    try:
-        _, _, _, guesses, cracked, _ = line.strip("\r\n").split("\t")
-        guesses, cracked = int(guesses), int(cracked)
-        return guesses, cracked
-    except ValueError:
-        print(f"{line} can not be parsed by default parser, rewrite this function", file=sys.stderr)
-        sys.exit(-1)
-
-
-def actual_key(line: str):
-    try:
-        _, _, guesses, cracked, _ = line.strip("\r\n").split("\t")
-        guesses, cracked = int(guesses), int(cracked)
-        return guesses, cracked
-    except ValueError:
-        print(f"{line} can not be parsed by default parser, rewrite this function", file=sys.stderr)
-        sys.exit(-1)
-
-
 def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
-            fd_test: TextIO, count_test: Callable[[TextIO, bool], int] = wc_l,
+            fd_test: TextIO, key: Callable[[str], Tuple[str, int, int]],
             lower_bound: int = 0, upper_bound: int = 10 ** 10,
-            color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None,
-            key: Callable[[str], Tuple[int, int]] = default_key):
+            color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None
+            ):
     """
 
     :param label:
@@ -73,7 +64,6 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
     :param line_width:
     :param marker:
     :param fd_test:
-    :param count_test:
     :param key: parse line for result, identify whether threshold is larger than guesses number
     :return:
     """
@@ -81,16 +71,21 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
         raise Exception(f"{fd_save.name} is not writable or closed")
     if not fd_gc.readable() or fd_gc.closed:
         raise Exception(f"{fd_gc.name} is not readable or closed")
-    total = count_test(fd_test, True)
+    test_items = count_test_set(fd_test, True)
+    total = sum(test_items.values())
     guesses_list = []
     cracked_list = []
+    cracked = 0
     for line in fd_gc:
-        guesses, cracked = key(line)
+        pwd, guesses, cnt = key(line)
+        if pwd not in test_items:
+            continue
         if guesses < lower_bound:
             continue
         if guesses > upper_bound:
             break
         # do something here
+        cracked += cnt
         guesses_list.append(guesses)
         cracked_list.append(cracked)
     fd_gc.close()
@@ -141,19 +136,22 @@ def main():
                      help="how to split a line in guess-crack file, default is '\\t'")
     cli.add_argument("--idx-guess", required=False, dest="idx_guess", default=3, type=int,
                      help="index of guess in a split line, start from 0")
-    cli.add_argument("--idx-crack", required=False, dest="idx_crack", default=4, type=int,
-                     help="index of crack in a split line, start from 0")
+    cli.add_argument("--idx-count", required=False, dest="idx_count", default=2, type=int,
+                     help="index of password num in a split line, start from 0")
+    cli.add_argument("--idx-pwd", required=False, dest="idx_pwd", default=0, type=int,
+                     help="index of pwd in a split line, start from 0")
     args = cli.parse_args()
 
     def my_key(line: str):
         try:
             split_line = line.strip("\r\n").split(args.gc_split)
-            return int(split_line[args.idx_guess]), int(split_line[args.idx_crack])
+            return split_line[args.idx_pwd], int(split_line[args.idx_guess]), int(split_line[args.idx_count])
         except ValueError:
             print(f"file to get guess and crack in {line}", end="")
             print(f"Your gc-split is '{args.gc_split}',\n"
+                  f"    idx_pwd is '{args.idx_pwd}',\n"
                   f"    idx_guess is '{args.idx_guess}',\n"
-                  f"    idx_crack is '{args.idx_crack}'")
+                  f"    idx_count is '{args.idx_count}'")
             sys.exit(-1)
 
     jsonify(label=args.label, fd_gc=args.fd_gc, fd_save=args.fd_save, fd_test=args.fd_test,
