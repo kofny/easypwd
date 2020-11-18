@@ -35,7 +35,7 @@ def reformat(pwd_dict: Dict[str, Tuple[float, float]], pwd_cnt: Dict[str, int], 
             pwd_lst.append((pwd, sys.float_info.min, cnt, 10 ** 50))
         else:
             prob, guess_number = pwd_dict[pwd]
-            pwd_lst.append((pwd, prob, cnt, guess_number))
+            pwd_lst.append((pwd, max(prob, sys.float_info.min), cnt, guess_number))
     pwd_lst = sorted(pwd_lst, key=lambda x: x[3])
     total = sum(pwd_cnt.values())
     del pwd_cnt, pwd_dict
