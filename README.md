@@ -3,6 +3,19 @@ Some password utils.
 
 Codes implemented in Python will not use external packages if possible.
 curver.py etc. have to import matplotlib.
+## INDEX
+
+- compare plaintext passwords line by line: **plainpwdcmp**
+- get training set and testing set from a corpus: **split2.py**
+- sample some passwords from a corpus: **samp.py**
+- draw guess-crack figure: **gutify.py & curver.py**
+- remove unwanted passwords: **cleaning.py**
+- get min_auto of a password dataset: **minrank.py**
+- remove passwords in training set and testing set: **havemenot.py**
+- remove unwanted passwords from result set: **re2cracked.py**
+- convert format of output from hashcat: **hashkitty.py**
+- convert format of output from LSTM: **lstm.py**
+- convert format of output from Monte Carlo 15 paper: **mc15conv.py**
 
 ## 1. plainpwdcmp
 
@@ -126,7 +139,7 @@ If you want some additional functions, rewrite it.
 ### outputs
 A picture
 
-## 5. datacleaning.py
+## 5. cleaning.py
 filter valid passwords from a dataset.
 
 ### usage
