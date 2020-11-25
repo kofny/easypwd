@@ -10,6 +10,18 @@ from collections import defaultdict
 from typing import TextIO, Tuple, Callable
 
 
+def read_dict(f_dict: TextIO):
+    if f_dict is None:
+        return []
+    pwd_cnt = defaultdict(int)
+    for line in f_dict:
+        line = line.strip("\r\n")
+        pwd_cnt[line] += 1
+    sorted_pwd_cnt = sorted(pwd_cnt.items(), key=lambda x: x[1], reverse=True)
+    f_dict.close()
+    return [pwd for pwd, _ in sorted_pwd_cnt]
+
+
 def count_test_set(file: TextIO, close_fd: bool = False):
     count = defaultdict(int)
     for line in file:
@@ -20,35 +32,8 @@ def count_test_set(file: TextIO, close_fd: bool = False):
     return count
 
 
-def wc_l(file: TextIO, close_fd: bool = False):
-    """
-    a pure function, file will not be closed and move the pointer to the begin
-    :param close_fd: whether close file or not
-    :param file: file to count lines
-    :return: number of lines
-    """
-    if file.closed:
-        raise Exception(f"You are counting line number of {file.name},"
-                        f" however, it has been closed")
-    file.seek(0)
-    new_line = "\n"
-    buf_size = 8 * 1024 * 1024
-    count = 0
-    while True:
-        buffer = file.read(buf_size)
-        if not buffer:
-            count += 1
-            break
-        count += buffer.count(new_line)
-    if close_fd:
-        file.close()
-    else:
-        file.seek(0)
-    return count
-
-
-def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
-            fd_test: TextIO, key: Callable[[str], Tuple[str, int, int]],
+def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO, fd_dict: TextIO,
+            fd_test: TextIO, key: Callable[[str], Tuple[str, int]],
             lower_bound: int = 0, upper_bound: int = 10 ** 10,
             color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None
             ):
@@ -57,6 +42,7 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
     :param label:
     :param fd_gc:
     :param fd_save:
+    :param fd_dict:
     :param lower_bound:
     :param upper_bound:
     :param color:
@@ -71,21 +57,37 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO,
         raise Exception(f"{fd_save.name} is not writable or closed")
     if not fd_gc.readable() or fd_gc.closed:
         raise Exception(f"{fd_gc.name} is not readable or closed")
+
     test_items = count_test_set(fd_test, True)
+    pwd_dict = read_dict(fd_dict)
     total = sum(test_items.values())
     guesses_list = []
     cracked_list = []
     cracked = 0
-    for line in fd_gc:
-        pwd, guesses, cnt = key(line)
+
+    for guesses, pwd in enumerate(pwd_dict):
         if pwd not in test_items:
             continue
+        cracked += test_items[pwd]
+        del test_items[pwd]
         if guesses < lower_bound:
             continue
         if guesses > upper_bound:
             break
-        # do something here
-        cracked += cnt
+        guesses_list.append(guesses)
+        cracked_list.append(cracked)
+    base_guesses = len(pwd_dict)
+    for line in fd_gc:
+        pwd, guesses = key(line)
+        if pwd not in test_items:
+            continue
+        cracked += test_items[pwd]
+        guesses += base_guesses
+        del test_items[pwd]
+        if guesses < lower_bound:
+            continue
+        if guesses > upper_bound:
+            break
         guesses_list.append(guesses)
         cracked_list.append(cracked)
     fd_gc.close()
@@ -117,11 +119,13 @@ def main():
                      help="guess crack file to be parsed")
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=argparse.FileType("w"),
                      help="save parsed data here")
+    cli.add_argument("-d", "--dict-attack", required=False, dest="fd_dict", type=argparse.FileType('r'),
+                     default=None, help="apply dict attack first")
     cli.add_argument("-t", "--test", required=True, dest="fd_test", type=argparse.FileType('r'),
                      help="test set, to count number of passwords in test set")
     cli.add_argument("--lower", required=False, dest="lower_bound", default=0, type=int,
                      help="guesses less than this will be ignored and will not appear in beautified json file")
-    cli.add_argument("--upper", required=False, dest="upper_bound", default=10 ** 10, type=int,
+    cli.add_argument("--upper", required=False, dest="upper_bound", default=10 ** 18, type=int,
                      help="guesses greater than this will be ignored and will not appear in beautified json file")
     cli.add_argument("-c", "--color", required=False, dest="color", default=None, type=str,
                      help="color of curve, using DEFAULT config if you dont set this flag")
@@ -136,25 +140,26 @@ def main():
                      help="how to split a line in guess-crack file, default is '\\t'")
     cli.add_argument("--idx-guess", required=False, dest="idx_guess", default=3, type=int,
                      help="index of guess in a split line, start from 0")
-    cli.add_argument("--idx-count", required=False, dest="idx_count", default=2, type=int,
-                     help="index of password num in a split line, start from 0")
     cli.add_argument("--idx-pwd", required=False, dest="idx_pwd", default=0, type=int,
                      help="index of pwd in a split line, start from 0")
     args = cli.parse_args()
 
+    gc_split = args.gc_split.replace('\\\\', '\\')
+
     def my_key(line: str):
         try:
-            split_line = line.strip("\r\n").split(args.gc_split)
-            return split_line[args.idx_pwd], int(split_line[args.idx_guess]), int(split_line[args.idx_count])
-        except ValueError:
-            print(f"file to get guess and crack in {line}", end="")
-            print(f"Your gc-split is '{args.gc_split}',\n"
+            split_line = line.strip("\r\n").split(gc_split)
+            return split_line[args.idx_pwd], int(split_line[args.idx_guess])
+        except Exception as e:
+            print(e, file=sys.stderr)
+            print(f"file to get guess and crack in {line}", end="", file=sys.stderr)
+            print(f"Your gc-split is '{gc_split}',\n"
                   f"    idx_pwd is '{args.idx_pwd}',\n"
-                  f"    idx_guess is '{args.idx_guess}',\n"
-                  f"    idx_count is '{args.idx_count}'")
+                  f"    idx_guess is '{args.idx_guess}'", file=sys.stderr)
             sys.exit(-1)
 
     jsonify(label=args.label, fd_gc=args.fd_gc, fd_save=args.fd_save, fd_test=args.fd_test,
+            fd_dict=args.fd_dict,
             lower_bound=args.lower_bound, upper_bound=args.upper_bound, color=args.color,
             marker=args.marker,
             line_style=line_style_dict.get(args.line_style, "solid"),

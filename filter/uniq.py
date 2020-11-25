@@ -46,7 +46,8 @@ def main():
     cli.add_argument("-o", dest="output", required=False, type=argparse.FileType("w"), default=sys.stdout,
                      help="results to be saved")
     cli.add_argument("-s", "--sort", dest="order", default="order", type=str,
-                     choices=["reverse", "random", "order"], help="the order of unique lines in output stream")
+                     choices=["reverse", "random", "order"],
+                     help="the order of unique lines in output stream, order means from largest to lowest")
     try:
         args = cli.parse_args()
         uniq_lines = uniq(args.input)
