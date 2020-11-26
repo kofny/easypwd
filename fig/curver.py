@@ -39,6 +39,7 @@ class PlotParams:
 
         self.xticks_val = args.xticks_val
         self.xticks_text = args.xticks_text
+        self.xtick_direction = args.xtick_direction
 
         if len(self.xticks_val) != len(self.xticks_text):
             print(f"{self.xticks_val} does not match {self.xticks_text}", file=sys.stderr)
@@ -46,6 +47,7 @@ class PlotParams:
 
         self.yticks_val = args.yticks_val
         self.yticks_text = args.yticks_text
+        self.ytick_direction = args.ytick_direction
 
         if len(self.yticks_val) != len(self.yticks_text):
             print(f"{self.yticks_val} does not match {self.yticks_text}", file=sys.stderr)
@@ -68,6 +70,12 @@ class PlotParams:
         self.vline_style = args.vline_style
         self.vline_label = args.vline_label
 
+        self.hide_grid = args.hide_grid
+        self.grid_linestyle = args.grid_linestyle
+
+        self.no_boarder = args.no_boarder
+        self.show_text = args.show_text
+
         if not (len(self.vlines) == len(self.vline_width) == len(self.vline_color) == len(self.vlines)):
             print(f"vlines should have same number of parameters", file=sys.stderr)
             sys.exit(-1)
@@ -87,34 +95,29 @@ class PlotParams:
 
 
 class LineParam:
-    def __init__(self, guesses_list, rate_list, color, marker, line_width, line_style, label):
-        self.guesses_list = guesses_list
+    def __init__(self, json_file: TextIO, close_fd: bool):
+        data = json.load(json_file)
+        cracked_list = data["cracked_list"]
+        total = data["total"]
+        rate_list = [cracked / total * 100 for cracked in cracked_list]
+        del cracked_list
+        if close_fd:
+            json_file.close()
+        elif json_file.seekable():
+            json_file.seek(0)
+        self.guesses_list = data["guesses_list"]
         self.rate_list = rate_list
-        self.color = color
-        self.marker = marker
-        self.line_width = line_width
-        self.line_style = line_style
-        self.label = label
-
-
-def read_gutify(json_file: TextIO, close_fd: bool):
-    data = json.load(json_file)
-    guesses_list = data["guesses_list"]
-    cracked_list = data["cracked_list"]
-    label = data["label"]
-    color = data["color"]
-    total = data["total"]
-    marker = data["marker"]
-    line_width = data["line_width"]
-    line_style = data["line_style"]
-    ratio_list = [cracked / total * 100 for cracked in cracked_list]
-    del data
-    del cracked_list
-    if close_fd:
-        json_file.close()
-    elif json_file.seekable():
-        json_file.seek(0)
-    return LineParam(guesses_list, ratio_list, color, marker, line_width, line_style, label)
+        self.color = data['color']
+        self.marker = data['marker']
+        self.line_width = data['line_width']
+        self.line_style = data['line_style']
+        self.label = data['label']
+        self.text = data['label']
+        self.show_text = data['show_text']
+        self.text_x = data['text_x']
+        self.text_y = data['text_y']
+        self.text_fontsize = data['text_fontsize']
+        self.text_color = data['text_color']
 
 
 def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = True):
@@ -123,11 +126,15 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         fig.set_tight_layout(True)
     label_line = defaultdict(list)
     for json_file in json_files:
-        line_params = read_gutify(json_file=json_file, close_fd=close_fd)
+        line_params = LineParam(json_file=json_file, close_fd=close_fd)
         line, = plt.plot(line_params.guesses_list, line_params.rate_list, color=line_params.color,
                          marker=line_params.marker, linewidth=line_params.line_width,
                          linestyle=line_params.line_style, label=line_params.label)
+        if plot_params.show_text and line_params.show_text:
+            plt.text(x=line_params.text_x, y=line_params.text_y, s=line_params.label,
+                     c=line_params.text_color, fontsize=line_params.text_fontsize)
         label_line[line_params.label].append(line)
+        del line_params
     plt.xscale(plot_params.xscale)
     plt.yscale(plot_params.yscale)
     if plot_params.xlim_low != DefaultVal.lim_low and plot_params.xlim_high != DefaultVal.lim_high:
@@ -144,7 +151,10 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         plt.yticks(plot_params.yticks_val, plot_params.yticks_text)
     if len(plot_params.xticks_val) != len(DefaultVal.empty_ticks):
         plt.xticks(plot_params.xticks_val, plot_params.xticks_text)
-    plt.tick_params(labelsize=plot_params.tick_size)
+    # direction and size of ticks
+    plt.tick_params(axis='x', labelsize=plot_params.tick_size, direction=plot_params.xtick_direction)
+    plt.tick_params(axis='y', labelsize=plot_params.tick_size, direction=plot_params.ytick_direction)
+    # v line
     for vline_x, vline_width, vline_color, vline_style, vline_label in \
             zip(plot_params.vlines, plot_params.vline_width,
                 plot_params.vline_color, plot_params.vline_style, plot_params.vline_label):
@@ -152,7 +162,13 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
                            label=vline_label)
         if not plot_params.vline_label_hide:
             label_line[vline_label].append(line)
-    plt.grid(ls="--")
+    # display grid
+    if not plot_params.hide_grid:
+        plt.grid(b=True, ls=plot_params.grid_linestyle)
+    # hide which boarder
+    ax = plt.gca()
+    for direction in plot_params.no_boarder:
+        ax.spines[direction].set_color('none')
     if plot_params.legend_loc != DefaultVal.legend:
         plt.legend([tuple(label_line[k]) for k in label_line.keys()],
                    [label for label in label_line.keys()],
@@ -204,13 +220,17 @@ def main():
     cli.add_argument("--xticks-val", required=False, dest="xticks_val", nargs="+", type=float,
                      default=DefaultVal.empty_ticks,
                      help="value of x ticks")
-    cli.add_argument("--xticks-text", required=False, dest="xticks_text", nargs="+", type=float,
+    cli.add_argument("--xticks-text", required=False, dest="xticks_text", nargs="+", type=str,
                      default=DefaultVal.empty_ticks,
                      help="text of x ticks")
+    cli.add_argument("--xtick-direction", required=False, dest="xtick_direction", type=str, default='out',
+                     choices=['in', 'out', 'inout'], help='Direction of xtick')
+    cli.add_argument("--ytick-direction", required=False, dest="ytick_direction", type=str, default='out',
+                     choices=['in', 'out', 'inout'], help='Direction of ytick')
     cli.add_argument("--yticks-val", required=False, dest="yticks_val", nargs="+", type=float,
                      default=DefaultVal.empty_ticks,
                      help="value of y ticks")
-    cli.add_argument("--yticks-text", required=False, dest="yticks_text", nargs="+", type=float,
+    cli.add_argument("--yticks-text", required=False, dest="yticks_text", nargs="+", type=str,
                      default=DefaultVal.empty_ticks,
                      help="text of y ticks")
     cli.add_argument("--tick-size", required=False, dest="tick_size", type=float, default=12,
@@ -239,12 +259,21 @@ def main():
                      help="styles for vlines in the figure")
     cli.add_argument("--vline-label", required=False, dest="vline_label", type=str, nargs="*", default=[],
                      help="labels for vlines in the figure. Do not set if you don't want to show these labels.")
-
+    cli.add_argument("--hide-grid", required=False, dest="hide_grid", action="store_true",
+                     help="hide grid")
+    cli.add_argument("--grid-linestyle", required=False, dest="grid_linestyle", type=str, default="dash",
+                     choices=list(line_style_dict.keys()))
+    cli.add_argument("--no-boarder", required=False, dest="no_boarder", type=str, nargs='*',
+                     default=["right", "top"], choices=["left", "bottom", "top", "right"],
+                     help='do not display boarder listed here')
+    cli.add_argument("--show-text", required=False, dest="show_text", action="store_true",
+                     help="show label text at right")
     args = cli.parse_args()
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])
     if not suffix_ok:
         args.fd_save += args.suffix
     args.vline_style = [line_style_dict[vline_style] for vline_style in args.vline_style]
+    args.grid_linestyle = line_style_dict[args.grid_linestyle]
     plot_params = PlotParams(args)
     curve(json_files=args.json_files, plot_params=plot_params, close_fd=True)
     pass
