@@ -55,8 +55,9 @@ def wrapper():
                      help="sampled files will be saved here")
     cli.add_argument('-n', '--samp-size', dest='samp_size', required=True, type=int,
                      help='How many passwords should this script sample')
-    cli.add_argument('-r', '--regex-valid', dest='valid_pwd', required=False, type=str,
-                     default=r"^[a-zA-Z0-9\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]{4,255}$",
+    cli.add_argument('-r', '--regex-valid', dest='valid_pwd', required=False,
+                     type=lambda k: re.compile(k.replace("\\\\", "\\")),
+                     default=re.compile(r"^[a-zA-Z0-9\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]{4,255}$"),
                      help="what is a valid password")
     cli.add_argument("--removed", dest="fd_removed", required=False, type=str, default="no",
                      help="valid passwords will display here, "
@@ -75,11 +76,8 @@ def wrapper():
             if make_sure != 'y' and make_sure != 'Y':
                 sys.exit(0)
         fd_removed = open(args.fd_removed, 'w')
-    regex_valid = args.valid_pwd.replace('\\\\', '\\')
-    print(f"Using RegEx: {regex_valid}", file=sys.stderr)
-    valid_pwd = re.compile(regex_valid)
     samp(args.corpus, args.samp_files, samp_size=args.samp_size,
-         valid_pwd=valid_pwd, fd_removed=fd_removed)
+         valid_pwd=args.valid_pwd, fd_removed=fd_removed)
     pass
 
 

@@ -37,7 +37,7 @@ def count_test_set(file: TextIO, close_fd: bool = False):
 def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO, fd_dict: TextIO,
             fd_test: TextIO, key: Callable[[str], Tuple[str, int]],
             text_xy: Tuple[float, float], text_fontsize: int, show_text: bool,
-            lower_bound: int = 0, upper_bound: int = 10 ** 10,
+            need_sort: bool, lower_bound: int = 0, upper_bound: int = 10 ** 10,
             color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None
             ):
     if not fd_save.writable() or fd_save.closed:
@@ -64,10 +64,15 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO, fd_dict: TextIO,
         guesses_list.append(guesses)
         cracked_list.append(cracked)
     base_guesses = len(pwd_dict)
+    lst = []
     for line in fd_gc:
         pwd, guesses = key(line)
         if pwd not in test_items:
             continue
+        lst.append((pwd, guesses))
+    if need_sort:
+        lst = sorted(lst, key=lambda x: x[1])
+    for pwd, guesses in lst:
         cracked += test_items[pwd]
         guesses += base_guesses
         del test_items[pwd]
@@ -154,6 +159,7 @@ def main():
                      help='y position of text')
     cli.add_argument("--text-fontsize", required=False, dest="text_fontsize", default=12, type=int,
                      help='fontsize of text')
+    cli.add_argument("--need-sort", required=False, dest="need_sort", action="store_true")
 
     args = cli.parse_args()
 
@@ -162,7 +168,7 @@ def main():
     def my_key(line: str):
         try:
             split_line = line.strip("\r\n").split(gc_split)
-            return split_line[args.idx_pwd], int(split_line[args.idx_guess])
+            return split_line[args.idx_pwd], int(float(split_line[args.idx_guess]) + 0.5)
         except Exception as e:
             print(e, file=sys.stderr)
             print(f"file to get guess and crack in {line}", end="", file=sys.stderr)
@@ -172,7 +178,7 @@ def main():
             sys.exit(-1)
 
     jsonify(label=args.label, fd_gc=args.fd_gc, fd_save=args.fd_save, fd_test=args.fd_test,
-            fd_dict=args.fd_dict,
+            fd_dict=args.fd_dict, need_sort=args.need_sort,
             lower_bound=args.lower_bound, upper_bound=args.upper_bound, color=args.color,
             marker=args.marker,
             line_style=line_style_dict.get(args.line_style, "solid"),
