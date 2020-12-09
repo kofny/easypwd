@@ -64,7 +64,8 @@ The usage of gutify is to some extent a long story.
 **Optional for -f**
 - --gc-split: How to split items of a line in guess number and cracked number file
 - --idx-guess: guess number is at idx-guess, start from 0
-- --idx-crack: cracked number is at idx-crack, start from 0
+- --idx-pwd: password is at idx-pwd, start from 0
+- --need-sort: need to sort the lines in the file
 
 **Optional for line style**
 - --upper: Max guess number
@@ -73,6 +74,13 @@ The usage of gutify is to some extent a long story.
 - --line-style: solid, dash, dot, or dot_dash
 - --marker: the marker on the line
 - --line-width: the width of the line
+
+**Optional for showing text at rightmost as a label**
+- --show-text: show text or not
+- --text-x: x axis position
+- --text-y: y axis position
+- --text-fontsize: fontsize
+
 
 ### outputs
 
@@ -131,6 +139,11 @@ _ cracked_list
 - --vline-color: colors for vlines
 - --vline-style: solid, dash, dot, dot_dash for vlines
 - --vline-label: labels for vlines. set it to empty if you dont need
+
+**Optional for grid**
+- --hide-grid: hide grid
+- --grid-linestyle: {solid,dash,dot_dash,dot}
+- --no-boarder [{left,bottom,top,right} ]
 
 This is a relatively easy utils to draw curves.
 
