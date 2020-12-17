@@ -5,6 +5,8 @@ This is a method to beautify the data of guesses and cracked file
 """
 import argparse
 import json
+import os
+
 import sys
 from collections import defaultdict
 from typing import TextIO, Tuple, Callable
@@ -34,56 +36,63 @@ def count_test_set(file: TextIO, close_fd: bool = False):
     return count
 
 
-def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO, fd_dict: TextIO,
+def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
             fd_test: TextIO, key: Callable[[str], Tuple[str, int]],
             text_xy: Tuple[float, float], text_fontsize: int, show_text: bool,
             need_sort: bool, lower_bound: int = 0, upper_bound: int = 10 ** 10,
-            color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None
+            color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None,
+            force_update: bool = False,
             ):
-    if not fd_save.writable() or fd_save.closed:
-        raise Exception(f"{fd_save.name} is not writable or closed")
     if not fd_gc.readable() or fd_gc.closed:
         raise Exception(f"{fd_gc.name} is not readable or closed")
 
-    test_items = count_test_set(fd_test, True)
-    pwd_dict = read_dict(fd_dict)
-    total = sum(test_items.values())
-    guesses_list = []
-    cracked_list = []
-    cracked = 0
-
-    for guesses, pwd in enumerate(pwd_dict):
-        if pwd not in test_items:
-            continue
-        cracked += test_items[pwd]
-        del test_items[pwd]
-        if guesses < lower_bound:
-            continue
-        if guesses > upper_bound:
-            break
-        guesses_list.append(guesses)
-        cracked_list.append(cracked)
-    base_guesses = len(pwd_dict)
-    lst = []
-    for line in fd_gc:
-        pwd, guesses = key(line)
-        if pwd not in test_items:
-            continue
-        lst.append((pwd, guesses))
-    if need_sort:
-        lst = sorted(lst, key=lambda x: x[1])
-    for pwd, guesses in lst:
-        cracked += test_items[pwd]
-        guesses += base_guesses
-        del test_items[pwd]
-        if guesses < lower_bound:
-            continue
-        if guesses > upper_bound:
-            break
-        guesses_list.append(guesses)
-        cracked_list.append(cracked)
-    fd_gc.close()
     text_x, text_y = text_xy
+    if not force_update and os.path.exists(fd_save):
+        fd = open(fd_save)
+        config = json.load(fd)
+        fd.close()
+        guesses_list = config['guesses_list']
+        cracked_list = config['cracked_list']
+        total = config['total']
+    else:
+        test_items = count_test_set(fd_test, True)
+        total = sum(test_items.values())
+        pwd_dict = read_dict(fd_dict)
+        guesses_list = []
+        cracked_list = []
+        cracked = 0
+        for guesses, pwd in enumerate(pwd_dict):
+            if pwd not in test_items:
+                continue
+            cracked += test_items[pwd]
+            del test_items[pwd]
+            if guesses < lower_bound:
+                continue
+            if guesses > upper_bound:
+                break
+            guesses_list.append(guesses)
+            cracked_list.append(cracked)
+        base_guesses = len(pwd_dict)
+        lst = []
+        for line in fd_gc:
+            pwd, guesses = key(line)
+            if pwd not in test_items:
+                continue
+            lst.append((pwd, guesses))
+        if need_sort:
+            lst = sorted(lst, key=lambda x: x[1])
+        for pwd, guesses in lst:
+            cracked += test_items[pwd]
+            guesses += base_guesses
+            del test_items[pwd]
+            if guesses < lower_bound:
+                continue
+            if guesses > upper_bound:
+                break
+            guesses_list.append(guesses)
+            cracked_list.append(cracked)
+        fd_gc.close()
+
     if text_x != default_pos and text_y != default_pos:
         show_text = True
     if text_x == default_pos:
@@ -110,8 +119,9 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: TextIO, fd_dict: TextIO,
         "text_color": text_color,
         "show_text": show_text,
     }
-    json.dump(curve, fd_save, indent=2)
-    fd_save.close()
+    fd_json = open(fd_save, 'w')
+    json.dump(curve, fd_json, indent=2)
+    fd_json.close()
 
 
 def main():
@@ -126,7 +136,7 @@ def main():
                      help="how to identify this curve")
     cli.add_argument("-f", "--gc", required=True, dest="fd_gc", type=argparse.FileType("r"),
                      help="guess crack file to be parsed")
-    cli.add_argument("-s", "--save", required=True, dest="fd_save", type=argparse.FileType("w"),
+    cli.add_argument("-s", "--save", required=True, dest="fd_save", type=str,
                      help="save parsed data here")
     cli.add_argument("-d", "--dict-attack", required=False, dest="fd_dict", type=argparse.FileType('r'),
                      default=None, help="apply dict attack first")
@@ -160,6 +170,7 @@ def main():
     cli.add_argument("--text-fontsize", required=False, dest="text_fontsize", default=12, type=int,
                      help='fontsize of text')
     cli.add_argument("--need-sort", required=False, dest="need_sort", action="store_true")
+    cli.add_argument("--force-update", required=False, dest="force_update", action="store_true")
 
     args = cli.parse_args()
 
@@ -180,7 +191,7 @@ def main():
     jsonify(label=args.label, fd_gc=args.fd_gc, fd_save=args.fd_save, fd_test=args.fd_test,
             fd_dict=args.fd_dict, need_sort=args.need_sort,
             lower_bound=args.lower_bound, upper_bound=args.upper_bound, color=args.color,
-            marker=args.marker,
+            marker=args.marker, force_update=args.force_update,
             line_style=line_style_dict.get(args.line_style, "solid"),
             line_width=args.line_width, key=my_key, text_xy=(args.text_x, args.text_y),
             text_fontsize=args.text_fontsize, show_text=args.show_text)

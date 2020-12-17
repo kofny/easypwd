@@ -16,6 +16,8 @@ curver.py etc. have to import matplotlib.
 - convert format of output from hashcat: **hashkitty.py**
 - convert format of output from LSTM: **lstm.py**
 - convert format of output from Monte Carlo 15 paper: **mc15conv.py**
+- count frequencies of passwords, characters, or segments split by splitter: **freq.py**
+
 
 ## 1. plainpwdcmp
 
@@ -65,7 +67,7 @@ The usage of gutify is to some extent a long story.
 - --gc-split: How to split items of a line in guess number and cracked number file
 - --idx-guess: guess number is at idx-guess, start from 0
 - --idx-pwd: password is at idx-pwd, start from 0
-- --need-sort: need to sort the lines in the file
+- --need-sort: need to sort the data in the file
 
 **Optional for line style**
 - --upper: Max guess number
@@ -80,6 +82,9 @@ The usage of gutify is to some extent a long story.
 - --text-x: x axis position
 - --text-y: y axis position
 - --text-fontsize: fontsize
+
+**Option for updating arguments**
+- --force-update: re-read the files. if not specify this flag, read data from `-s` and ignore `--lower`, `--upper`
 
 
 ### outputs
@@ -186,3 +191,18 @@ by hashcat debug mode to my format.
 
 ### output
 hashcat result in my format
+
+
+## 8. freq.py
+
+Count frequencies of password dataset.
+
+### usage
+- -f: password file
+- -s: save frequencies
+- --splitter: `whole` for passwords, `chr` for characters, splitter for segments
+- --start: the index of the first element
+- --step: index of the next element = current index + step
+- --sample: sample n passwords to count frequenices
+- --end: `\n` or `\r\n`, specify the end of a line in saved file
+

@@ -237,7 +237,7 @@ def main():
                      help="size of ticks text")
     cli.add_argument("--legend-loc", required=False, dest="legend_loc", type=str, default=DefaultVal.legend,
                      choices=[DefaultVal.legend, "best", "upper left", "upper right", "bottom left", "bottom right"],
-                     help="set it to -2 if you dont want use label")
+                     help="set it to none if you dont want use label")
     cli.add_argument("--legend-fontsize", required=False, dest="legend_fontsize", type=float,
                      default=DefaultVal.legend_fontsize, help="font size of legend")
     cli.add_argument("--legend-handle-length", required=False, dest="legend_handle_length", type=float, default=2,
