@@ -264,7 +264,7 @@ def main():
     cli.add_argument("--grid-linestyle", required=False, dest="grid_linestyle", type=str, default="dash",
                      choices=list(line_style_dict.keys()))
     cli.add_argument("--no-boarder", required=False, dest="no_boarder", type=str, nargs='*',
-                     default=["right", "top"], choices=["left", "bottom", "top", "right"],
+                     default=[], choices=["left", "bottom", "top", "right"],
                      help='do not display boarder listed here')
     cli.add_argument("--show-text", required=False, dest="show_text", action="store_true",
                      help="show label text at right")
