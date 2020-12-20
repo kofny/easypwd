@@ -73,6 +73,7 @@ class PlotParams:
         self.hide_grid = args.hide_grid
         self.grid_linestyle = args.grid_linestyle
 
+        self.fig_size = args.fig_size
         self.no_boarder = args.no_boarder
         self.show_text = args.show_text
 
@@ -121,7 +122,7 @@ class LineParam:
 
 
 def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = True):
-    fig = plt.figure()
+    fig = plt.figure(figsize=plot_params.fig_size)
     if plot_params.set_tight_layout:
         fig.set_tight_layout(True)
     label_line = defaultdict(list)
@@ -236,7 +237,7 @@ def main():
     cli.add_argument("--tick-size", required=False, dest="tick_size", type=float, default=12,
                      help="size of ticks text")
     cli.add_argument("--legend-loc", required=False, dest="legend_loc", type=str, default=DefaultVal.legend,
-                     choices=[DefaultVal.legend, "best", "upper left", "upper right", "bottom left", "bottom right"],
+                     choices=[DefaultVal.legend, "best", "upper left", "upper right", "lower left", "lower right"],
                      help="set it to none if you dont want use label")
     cli.add_argument("--legend-fontsize", required=False, dest="legend_fontsize", type=float,
                      default=DefaultVal.legend_fontsize, help="font size of legend")
@@ -263,6 +264,9 @@ def main():
                      help="hide grid")
     cli.add_argument("--grid-linestyle", required=False, dest="grid_linestyle", type=str, default="dash",
                      choices=list(line_style_dict.keys()))
+    cli.add_argument("--fig-size", required=False, dest="fig_size",
+                     type=lambda x: tuple([float(f) for f in str(x).split(" ") if len(f) > 0]), default=None,
+                     help="`width height` wrapped by \' and split by space")
     cli.add_argument("--no-boarder", required=False, dest="no_boarder", type=str, nargs='*',
                      default=[], choices=["left", "bottom", "top", "right"],
                      help='do not display boarder listed here')

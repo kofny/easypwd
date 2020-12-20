@@ -33,6 +33,8 @@ def conv(ranked: TextIO, wanted: Dict[str, int], save2: TextIO, skip_lines: int,
             continue
         prob = sys.float_info.min if prob_idx == -1 else items[prob_idx]
         rank = items[rank_idx]
+        if rank == 'inf' or rank == '-inf':
+            rank = 10 ** 50
         pwd_rank[pwd] = (wanted[pwd], float(prob), float(rank))
     prev_rank = 0
     cracked = 0
@@ -40,6 +42,7 @@ def conv(ranked: TextIO, wanted: Dict[str, int], save2: TextIO, skip_lines: int,
     for pwd, (num, prob, rank) in sorted(pwd_rank.items(), key=lambda x: x[1][2]):
         cracked += num
         rank = round(max(rank, prev_rank + 1))
+        prev_rank = rank
         save2.write(f"{pwd}\t{prob}\t{num}\t{rank}\t{cracked}\t{cracked / total * 100:5.2f}\n")
 
 
