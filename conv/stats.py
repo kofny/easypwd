@@ -34,23 +34,30 @@ def chr_dist(dataset: TextIO, close_fd: bool = False) -> (int, Dict[str, int], D
     :return: total, chr_dict, cls_dict
     """
     if not dataset.readable():
-        print(f"unble to read {dataset.name}", file=sys.stderr)
+        print(f"unable to read {dataset.name}", file=sys.stderr)
         sys.exit(-1)
     dataset.seek(0)
     chr_dict = defaultdict(int)
     cls_dict = defaultdict(int)
+    cls_number_dict = defaultdict(int)
     for line in dataset:
         line = line.strip("\r\n")
+        cls_lst = {"upper": 0, "lower": 0, "digit": 0, "other": 0}
         for c in line:
             if c.isalpha():
                 if c.isupper():
-                    cls_dict["upper"] += 1
+                    cls_lst['upper'] += 1
+                    # cls_dict["upper"] += 1
                 else:
-                    cls_dict['lower'] += 1
+                    cls_lst['lower'] += 1
             elif c.isdigit():
-                cls_dict["digit"] += 1
+                cls_lst["digit"] += 1
             else:
-                cls_dict["other"] += 1
+                cls_lst["other"] += 1
+            for k, v in cls_lst.items():
+                cls_dict[k] += v
+            cls_number = sum([1 if c > 0 else 0 for c in cls_lst.values()])
+            cls_number_dict[cls_number] += 1
             chr_dict[c] += 1
     if close_fd:
         dataset.close()

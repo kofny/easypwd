@@ -4,12 +4,14 @@ Easy toolkit for Guess-Crack Curve
 This is a method to beautify the data of guesses and cracked file
 """
 import argparse
+import bisect
 import json
 import os
+from tempfile import TemporaryFile
 
 import sys
 from collections import defaultdict
-from typing import TextIO, Tuple, Callable
+from typing import TextIO, Tuple, Callable, List
 
 default_pos = -10 ** 40
 
@@ -39,10 +41,13 @@ def count_test_set(file: TextIO, close_fd: bool = False):
 def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
             fd_test: TextIO, key: Callable[[str], Tuple[str, int]],
             text_xy: Tuple[float, float], text_fontsize: int, show_text: bool,
-            need_sort: bool, lower_bound: int = 0, upper_bound: int = 10 ** 10,
+            need_sort: bool, marker_size: float, mark_idx: List[int],
+            lower_bound: int = 0, upper_bound: int = 10 ** 10,
             color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None,
-            force_update: bool = False,
+            force_update: bool = False
             ):
+    if fd_gc is None:
+        fd_gc = TemporaryFile(mode='r')
     if not fd_gc.readable() or fd_gc.closed:
         raise Exception(f"{fd_gc.name} is not readable or closed")
 
@@ -91,7 +96,7 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
                 break
             guesses_list.append(guesses)
             cracked_list.append(cracked)
-        fd_gc.close()
+    fd_gc.close()
 
     if text_x != default_pos and text_y != default_pos:
         show_text = True
@@ -104,10 +109,23 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
         text_color = "black"
     else:
         text_color = color
+    if mark_idx is None:
+        actual_mark_every = None
+    elif len(mark_idx) == 1:
+        actual_mark_every = mark_idx[0]
+    else:
+        actual_mark_every = []
+        for idx in mark_idx:
+            actual_idx = min(len(guesses_list) - 1, bisect.bisect_right(guesses_list, idx))
+            if len(actual_mark_every) > 0 and actual_mark_every[-1] == actual_idx:
+                continue
+            actual_mark_every.append(actual_idx)
     curve = {
         "label": label,
         "total": total,
         "marker": marker,
+        "marker_size": marker_size,
+        "mark_every": actual_mark_every,
         "color": color,
         "line_style": line_style,
         "line_width": line_width,
@@ -134,8 +152,8 @@ def main():
     cli = argparse.ArgumentParser("Beautify Guess-Crack result file")
     cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
                      help="how to identify this curve")
-    cli.add_argument("-f", "--gc", required=True, dest="fd_gc", type=argparse.FileType("r"),
-                     help="guess crack file to be parsed")
+    cli.add_argument("-f", "--gc", required=False, dest="fd_gc", type=argparse.FileType("r"),
+                     default=None, help="guess crack file to be parsed")
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=str,
                      help="save parsed data here")
     cli.add_argument("-d", "--dict-attack", required=False, dest="fd_dict", type=argparse.FileType('r'),
@@ -151,8 +169,13 @@ def main():
     cli.add_argument("--line-style", required=False, dest="line_style", default="solid", type=str,
                      choices=list(line_style_dict.keys()), help="style of line, solid or other")
     cli.add_argument("--marker", required=False, dest="marker", default=None, type=str,
-                     choices=["+", "o", ".", ",", "<", ">", "v", "^", "1", "2", "3", "4", "s", "p", "_", "x", "*"],
+                     choices=["|", "+", "o", ".", ",", "<", ">", "v", "^", "1", "2", "3", "4", "s", "p", "_", "x", "*",
+                              "D", 'P', 'h', 'H', 'X'],
                      help="the marker for points of curve, default None")
+    cli.add_argument("--marker-size", required=False, dest="marker_size", default=2, type=float,
+                     help="marker size")
+    cli.add_argument("--mark-idx", required=False, dest="mark_idx", default=None, type=int, nargs="+",
+                     help="show marker at specified position")
     cli.add_argument("--line-width", required=False, dest="line_width", default=1.0, type=float,
                      help="width of line, can be float point number")
     cli.add_argument("--gc-split", required=False, dest="gc_split", default="\t", type=str,
@@ -191,7 +214,8 @@ def main():
     jsonify(label=args.label, fd_gc=args.fd_gc, fd_save=args.fd_save, fd_test=args.fd_test,
             fd_dict=args.fd_dict, need_sort=args.need_sort,
             lower_bound=args.lower_bound, upper_bound=args.upper_bound, color=args.color,
-            marker=args.marker, force_update=args.force_update,
+            marker=args.marker, marker_size=args.marker_size, mark_idx=args.mark_idx,
+            force_update=args.force_update,
             line_style=line_style_dict.get(args.line_style, "solid"),
             line_width=args.line_width, key=my_key, text_xy=(args.text_x, args.text_y),
             text_fontsize=args.text_fontsize, show_text=args.show_text)

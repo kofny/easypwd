@@ -61,6 +61,7 @@ class PlotParams:
         self.legend_loc = args.legend_loc
         self.legend_fontsize = args.legend_fontsize
         self.legend_handle_length = args.legend_handle_length
+        self.legend_frameon = args.legend_frameon
 
         self.set_tight_layout = args.tight
 
@@ -70,7 +71,7 @@ class PlotParams:
         self.vline_style = args.vline_style
         self.vline_label = args.vline_label
 
-        self.hide_grid = args.hide_grid
+        self.show_grid = args.show_grid
         self.grid_linestyle = args.grid_linestyle
 
         self.fig_size = args.fig_size
@@ -110,6 +111,8 @@ class LineParam:
         self.rate_list = rate_list
         self.color = data['color']
         self.marker = data['marker']
+        self.marker_size = data['marker_size']
+        self.mark_every = data["mark_every"]
         self.line_width = data['line_width']
         self.line_style = data['line_style']
         self.label = data['label']
@@ -129,7 +132,8 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     for json_file in json_files:
         line_params = LineParam(json_file=json_file, close_fd=close_fd)
         line, = plt.plot(line_params.guesses_list, line_params.rate_list, color=line_params.color,
-                         marker=line_params.marker, linewidth=line_params.line_width,
+                         marker=line_params.marker, markersize=line_params.marker_size,
+                         markevery=line_params.mark_every, linewidth=line_params.line_width,
                          linestyle=line_params.line_style, label=line_params.label)
         if plot_params.show_text and line_params.show_text:
             plt.text(x=line_params.text_x, y=line_params.text_y, s=line_params.label,
@@ -164,7 +168,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         if not plot_params.vline_label_hide:
             label_line[vline_label].append(line)
     # display grid
-    if not plot_params.hide_grid:
+    if plot_params.show_grid:
         plt.grid(b=True, ls=plot_params.grid_linestyle)
     # hide which boarder
     ax = plt.gca()
@@ -176,7 +180,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
                    handlelength=plot_params.legend_handle_length,
                    loc=plot_params.legend_loc,
                    fontsize=plot_params.legend_fontsize,
-                   handler_map={tuple: HandlerTuple(ndivide=1)})
+                   handler_map={tuple: HandlerTuple(ndivide=1)}, frameon=plot_params.legend_frameon)
     plt.savefig(plot_params.save)
     plt.close(fig)
     pass
@@ -243,6 +247,8 @@ def main():
                      default=DefaultVal.legend_fontsize, help="font size of legend")
     cli.add_argument("--legend-handle-length", required=False, dest="legend_handle_length", type=float, default=2,
                      help="legend handle length")
+    cli.add_argument("--legend-frameon", required=False, dest="legend_frameon", action="store_true",
+                     help="show boarder of the legend")
     cli.add_argument("--xscale", required=False, dest="xscale", type=str, default="log",
                      choices=["linear", "log", "symlog", "logit"], help="scale x axis")
     cli.add_argument("--yscale", required=False, dest="yscale", type=str, default="linear",
@@ -260,8 +266,8 @@ def main():
                      help="styles for vlines in the figure")
     cli.add_argument("--vline-label", required=False, dest="vline_label", type=str, nargs="*", default=[],
                      help="labels for vlines in the figure. Do not set if you don't want to show these labels.")
-    cli.add_argument("--hide-grid", required=False, dest="hide_grid", action="store_true",
-                     help="hide grid")
+    cli.add_argument("--show-grid", required=False, dest="show_grid", action="store_true",
+                     help="show grid")
     cli.add_argument("--grid-linestyle", required=False, dest="grid_linestyle", type=str, default="dash",
                      choices=list(line_style_dict.keys()))
     cli.add_argument("--fig-size", required=False, dest="fig_size",
