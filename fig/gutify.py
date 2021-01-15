@@ -143,12 +143,12 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
 
 
 def main():
-    line_style_dict = {
-        "solid": "-",
-        "dash": "--",
-        "dot_dash": "-.",
-        "dot": ":"
-    }
+    # line_style_dict = {
+    #     "solid": "-",
+    #     "dashed": "--",
+    #     "dash": "-.",
+    #     "dot": ":"
+    # }
     cli = argparse.ArgumentParser("Beautify Guess-Crack result file")
     cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
                      help="how to identify this curve")
@@ -167,7 +167,7 @@ def main():
     cli.add_argument("-c", "--color", required=False, dest="color", default=None, type=str,
                      help="color of curve, using DEFAULT config if you dont set this flag")
     cli.add_argument("--line-style", required=False, dest="line_style", default="solid", type=str,
-                     choices=list(line_style_dict.keys()), help="style of line, solid or other")
+                     help="style of line, solid or other")
     cli.add_argument("--marker", required=False, dest="marker", default=None, type=str,
                      choices=["|", "+", "o", ".", ",", "<", ">", "v", "^", "1", "2", "3", "4", "s", "p", "_", "x", "*",
                               "D", 'P', 'h', 'H', 'X'],
@@ -211,12 +211,21 @@ def main():
                   f"    idx_guess is '{args.idx_guess}'", file=sys.stderr)
             sys.exit(-1)
 
+    line_style = args.line_style
+    if line_style not in {'solid', 'dashed', 'dashdot', 'dotted'}:
+        seq = [float(i) for i in line_style.split(" ") if len(i) > 0]
+        offset = seq[0]
+        onoffseq = seq[1:]
+        if len(onoffseq) % 2 != 0:
+            raise Exception("onoffseq should have even items!")
+        line_style = (offset, tuple(onoffseq))
+
     jsonify(label=args.label, fd_gc=args.fd_gc, fd_save=args.fd_save, fd_test=args.fd_test,
             fd_dict=args.fd_dict, need_sort=args.need_sort,
             lower_bound=args.lower_bound, upper_bound=args.upper_bound, color=args.color,
             marker=args.marker, marker_size=args.marker_size, mark_idx=args.mark_idx,
             force_update=args.force_update,
-            line_style=line_style_dict.get(args.line_style, "solid"),
+            line_style=line_style,
             line_width=args.line_width, key=my_key, text_xy=(args.text_x, args.text_y),
             text_fontsize=args.text_fontsize, show_text=args.show_text)
 

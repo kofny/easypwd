@@ -114,7 +114,11 @@ class LineParam:
         self.marker_size = data['marker_size']
         self.mark_every = data["mark_every"]
         self.line_width = data['line_width']
-        self.line_style = data['line_style']
+        if type(data['line_style']) is str:
+            self.line_style = data['line_style']
+        else:
+            self.line_style = (data['line_style'][0], tuple(list(data['line_style'][1])))
+        print(self.line_style)
         self.label = data['label']
         self.text = data['label']
         self.show_text = data['show_text']
