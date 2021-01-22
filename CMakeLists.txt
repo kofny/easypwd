@@ -3,4 +3,4 @@ project(easypwd)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(plaincmp kits/plaincmp.cpp kits/plaincmp.h)
+add_executable(plaincmp guessing/plaincmp.cpp guessing/plaincmp.h)

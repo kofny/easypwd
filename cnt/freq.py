@@ -40,7 +40,7 @@ def count(file: TextIO, sample_size: int, splitter: str, start: int, step: int):
 
 
 def wrapper():
-    cli = argparse.ArgumentParser("Count frequency")
+    cli = argparse.ArgumentParser("The code counts the frequency of passwords, segments or characters in a dataset.")
     cli.add_argument("-f", "--file", dest="file", required=True, type=argparse.FileType('r'), help="file to be counted")
     cli.add_argument("-s", "--save", dest="save", required=True, type=argparse.FileType('w'),
                      help="frequencies will be saved here.")

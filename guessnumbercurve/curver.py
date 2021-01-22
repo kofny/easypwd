@@ -118,7 +118,6 @@ class LineParam:
             self.line_style = data['line_style']
         else:
             self.line_style = (data['line_style'][0], tuple(list(data['line_style'][1])))
-        print(self.line_style)
         self.label = data['label']
         self.text = data['label']
         self.show_text = data['show_text']
