@@ -948,7 +948,14 @@ def wrapper():
                           "then identify these leet patterns from given passwords.")
     cli.add_argument("-p", "--pwd-set", dest="pwd_set", type=argparse.FileType('r'), required=True,
                      help="Given passwords. We will identify leet patterns from these passwords.")
+    cli.add_argument("-o", "--output", dest="output", type=argparse.FileType('w'), required=True,
+                     help="Leet patterns identified from given passwords will appear in this file. "
+                          "Note that the 4th line is the start of the identified leet patterns.")
     args = cli.parse_args()
+    f_out = args.output  # type: TextIO
+    if not f_out.writable():
+        print(f"{f_out.name} is not writable", file=sys.stderr)
+        sys.exit(-1)
     leet_detector = obtain_leet_detector(corpus=args.corpus)
     pwd_set = args.pwd_set  # type: TextIO
     pwd_dict = collections.defaultdict(int)
@@ -957,6 +964,7 @@ def wrapper():
         pwd_dict[pwd] += 1
         # print(leet_patterns, mask_lists)
     containing_leet = 0
+    total = sum(pwd_dict.values())
     leet_dict = {**leet_detector.l33t_map}
     for pwd, cnt in pwd_dict.items():
         _, leet_pattern_list, mask_list = leet_detector.parse(pwd)
@@ -964,6 +972,18 @@ def wrapper():
             containing_leet += cnt
         for leet_pattern in leet_pattern_list:
             leet_dict[leet_pattern] += cnt
+    info = f"Containing leet patterns: {containing_leet},\n" \
+           f"Total passwords: {total},\n" \
+           f"Proportion: {containing_leet / total * 100:7.4f}\\%"
+    print(info)
+    print(info, file=f_out)
+    for leet_pattern, num in sorted(leet_dict.items(), key=lambda x: x[1], reverse=True):
+        if num > 0:
+            f_out.write(f"{leet_pattern}\t{num}\t{num / total * 100:7.4f}\n")
+        else:
+            break
+    f_out.flush()
+    f_out.close()
 
     pass
 
