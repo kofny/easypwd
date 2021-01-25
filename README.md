@@ -236,5 +236,5 @@ Fitting PDF-Zipf model.
 
 ### usage
 
-- positional: the only argument represents the frequency list file
-
+- positional: the first argument represents the frequency list file
+- -f: the minimal frequency used to fit PDF-Zipf model
