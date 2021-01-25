@@ -38,7 +38,7 @@ def pdf_fitting(frequencies: List[int]):
 def wrapper():
     cli = argparse.ArgumentParser("PDF-Zipf model")
     cli.add_argument("fd_freq", type=argparse.FileType('r'))
-    cli.add_argument("-f", "--filter", dest="filter", required=False, default=5,
+    cli.add_argument("-f", "--filter", dest="filter", required=False, default=5, type=int,
                      help="remove frequency less than the value")
     args = cli.parse_args()
     freq_list, coverage = read_frequency_list(fd_freq=args.fd_freq, filter_less=args.filter)
