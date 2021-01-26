@@ -19,6 +19,8 @@ Code implemented in Python will use only builtin packages if possible. curver.py
 - convert format of output from Monte Carlo 15 paper: **mc15conv.py**
 - count frequencies of passwords, characters, or segments split by splitter: **freq.py**
 - fitting PDF-Zipf model: **PDFZipf.py**
+- identifying leet patterns: **leet.py**
+- identifying keyboard patterns: **kbd.py**
 
 ## 1. plainpwdcmp
 

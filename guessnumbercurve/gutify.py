@@ -15,6 +15,8 @@ from typing import TextIO, Tuple, Callable, List
 
 default_pos = -10 ** 40
 
+print(f"Caution! The code renames guesses_list to x_list, and cracked_list to y_list!", file=sys.stderr)
+
 
 def read_dict(f_dict: TextIO):
     if f_dict is None:
@@ -56,8 +58,8 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
         fd = open(fd_save)
         config = json.load(fd)
         fd.close()
-        guesses_list = config['guesses_list']
-        cracked_list = config['cracked_list']
+        guesses_list = config['x_list']
+        cracked_list = config['y_list']
         total = config['total']
     else:
         test_items = count_test_set(fd_test, True)
@@ -129,8 +131,8 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
         "color": color,
         "line_style": line_style,
         "line_width": line_width,
-        "guesses_list": guesses_list,
-        "cracked_list": cracked_list,
+        "x_list": guesses_list,
+        "y_list": cracked_list,
         "text_x": text_x,
         "text_y": text_y,
         "text_fontsize": text_fontsize,
@@ -143,12 +145,6 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
 
 
 def main():
-    # line_style_dict = {
-    #     "solid": "-",
-    #     "dashed": "--",
-    #     "dash": "-.",
-    #     "dot": ":"
-    # }
     cli = argparse.ArgumentParser("Beautify Guess-Crack result file")
     cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
                      help="how to identify this curve")

@@ -99,16 +99,16 @@ class PlotParams:
 class LineParam:
     def __init__(self, json_file: TextIO, close_fd: bool):
         data = json.load(json_file)
-        cracked_list = data["cracked_list"]
+        y_list = data["y_list"]
         total = data["total"]
-        rate_list = [cracked / total * 100 for cracked in cracked_list]
-        del cracked_list
+        rate_list = [cracked / total * 100 for cracked in y_list]
+        del y_list
         if close_fd:
             json_file.close()
         elif json_file.seekable():
             json_file.seek(0)
-        self.guesses_list = data["guesses_list"]
-        self.rate_list = rate_list
+        self.x_list = data["x_list"]
+        self.y_list = rate_list
         self.color = data['color']
         self.marker = data['marker']
         self.marker_size = data['marker_size']
@@ -134,7 +134,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     label_line = defaultdict(list)
     for json_file in json_files:
         line_params = LineParam(json_file=json_file, close_fd=close_fd)
-        line, = plt.plot(line_params.guesses_list, line_params.rate_list, color=line_params.color,
+        line, = plt.plot(line_params.x_list, line_params.y_list, color=line_params.color,
                          marker=line_params.marker, markersize=line_params.marker_size,
                          markevery=line_params.mark_every, linewidth=line_params.line_width,
                          linestyle=line_params.line_style, label=line_params.label)
