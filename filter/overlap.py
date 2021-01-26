@@ -2,8 +2,11 @@
 """
 A and B have the same passwords, and this file is helpful to find them.
 """
+import argparse
 from collections import defaultdict
 from typing import Dict, TextIO, Union
+
+import sys
 
 
 def overlap(pwd_cnt_a: Dict[str, int], pwd_cnt_b: Dict[str, int]):
@@ -24,10 +27,14 @@ def read_pwd_cnt(fd: TextIO, close_fd: bool = True):
 
 def wrapper(fd_a: TextIO, fd_b: TextIO, fd_both: Union[None, TextIO] = None, fd_only_a: Union[None, TextIO] = None,
             fd_only_b: Union[None, TextIO] = None):
+    if all([fd is None for fd in [fd_both, fd_only_a, fd_only_b]]):
+        print(f"Specify at least one of the following files:\n"
+              f"1. only a\n2. only b\n3. both", file=sys.stderr)
     pwd_cnt_a = read_pwd_cnt(fd_a)
     pwd_cnt_b = read_pwd_cnt(fd_b)
     both, only_a, only_b = overlap(pwd_cnt_a, pwd_cnt_b)
-    for fd, d in [(fd_both, both), (fd_only_a, only_a), (fd_only_b, only_b)]:
+    lst = [(fd_both, both), (fd_only_a, only_a), (fd_only_b, only_b)]
+    for fd, d in lst:
         if fd is not None:
             if not fd.writable():
                 raise Exception(f"{fd} not writable")
@@ -38,10 +45,23 @@ def wrapper(fd_a: TextIO, fd_b: TextIO, fd_both: Union[None, TextIO] = None, fd_
 
 
 def main():
+    cli = argparse.ArgumentParser("Find overlap of two datasets of cracked passwords")
+    cli.add_argument("-a", "--pwd-set-a", dest="pwd_set_a", type=argparse.FileType('r'), required=True,
+                     help="Dataset A of given passwords.")
+    cli.add_argument("-b", "--pwd-set-b", dest="pwd_set_b", type=argparse.FileType('r'), required=True,
+                     help="Dataset B of given passwords.")
+    cli.add_argument("--only-a", dest="only_a", type=argparse.FileType('w'), required=False, default=None,
+                     help="Output passwords appear in dataset A only.")
+    cli.add_argument("--only-b", dest="only_b", type=argparse.FileType('w'), required=False, default=None,
+                     help="Output passwords appear in dataset B only.")
+    cli.add_argument("--both", dest="both", type=argparse.FileType('w'), required=False, default=None,
+                     help="Output passwords appear in both datasets")
+    args = cli.parse_args()
+
+    wrapper(fd_a=args.pwd_set_a, fd_b=args.pwd_set_b, fd_both=args.both, fd_only_a=args.only_a, fd_only_b=args.only_b)
     pass
 
 
 if __name__ == '__main__':
-    wrapper(open("/home/cw/Documents/tmp/cracked_pwd.txt"), open("/home/cw/Documents/tmp/real_cracked.txt"),
-            fd_only_b=open("/home/cw/Documents/tmp/real_only.txt", "w"))
+    main()
     pass
