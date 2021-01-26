@@ -2,14 +2,14 @@
 
 Some password utils.
 
-Code implemented in Python will use only builtin packages if possible. curver.py etc. have to import matplotlib.
+Code implemented in Python will use only builtin packages if possible. lines.py etc. have to import matplotlib.
 
 ## INDEX
 
 - compare plaintext passwords line by line: **plainpwdcmp**
 - get training set and testing set from a corpus: **split2.py**
 - sample some passwords from a corpus: **samp.py**
-- draw guess-crack figure: **gutify.py & curver.py**
+- draw guess-crack figure: **gutify.py & lines.py**
 - remove unwanted passwords: **cleaning.py**
 - get min_auto of a password dataset: **minrank.py**
 - remove passwords in training set and testing set: **havemenot.py**
@@ -109,7 +109,7 @@ A json file contains following items:
 - line_width _ line_style, solid or other
 - guesses_list _ cracked_list
 
-## 4. curver.py
+## 4. lines.py
 
 ### usage
 
