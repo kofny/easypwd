@@ -696,6 +696,8 @@ class AsciiL33tDetector:
         raw_leets = []
         for unleeted in unleeted_list:
             # unleeted = "".join(unleeted)
+            if not "".join(unleeted).isalpha():
+                continue
             for i in range(0, len(unleeted)):
                 for j in range(len(unleeted), i + 1, -1):
                     substr = "".join(unleeted[i:j])
@@ -988,5 +990,16 @@ def wrapper():
     pass
 
 
+def test_unleet():
+    ttt = AsciiL33tDetector(None)
+    t111 = ttt.unleet("_love")
+    for iii in t111:
+        if not "".join(iii).isalpha():
+            continue
+        print(iii)
+    pass
+
+
 if __name__ == '__main__':
     wrapper()
+    pass
