@@ -1,0 +1,27 @@
+{
+  "label": "default label",
+  "total": 10,
+  "marker": "+",
+  "marker_size": 3,
+  "mark_every": 10,
+  "color": "black",
+  "line_style": "dotted",
+  "line_width": 1,
+  "x_list": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "y_list": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "text_x": 4,
+  "text_y": 4,
+  "text_fontsize": 12,
+  "text_color": "black",
+  "show_text": false
+}

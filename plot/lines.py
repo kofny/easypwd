@@ -63,7 +63,7 @@ class PlotParams:
         self.legend_handle_length = args.legend_handle_length
         self.legend_frameon = args.legend_frameon
 
-        self.set_tight_layout = args.tight
+        self.tight_layout = not args.no_tight
 
         self.vlines = args.vlines
         self.vline_width = args.vline_width
@@ -97,18 +97,18 @@ class PlotParams:
 
 
 class LineParam:
-    def __init__(self, json_file: TextIO, close_fd: bool):
+    def __init__(self, json_file: TextIO, close_fd: bool, percent: bool = True):
         data = json.load(json_file)
         y_list = data["y_list"]
         total = data["total"]
-        rate_list = [cracked / total * 100 for cracked in y_list]
-        del y_list
+        if percent:
+            y_list = [cracked / total * 100 for cracked in y_list]
         if close_fd:
             json_file.close()
         elif json_file.seekable():
             json_file.seek(0)
         self.x_list = data["x_list"]
-        self.y_list = rate_list
+        self.y_list = y_list
         self.color = data['color']
         self.marker = data['marker']
         self.marker_size = data['marker_size']
@@ -129,8 +129,7 @@ class LineParam:
 
 def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = True):
     fig = plt.figure(figsize=plot_params.fig_size)
-    if plot_params.set_tight_layout:
-        fig.set_tight_layout(True)
+    fig.set_tight_layout(plot_params.tight_layout)
     label_line = defaultdict(list)
     for json_file in json_files:
         line_params = LineParam(json_file=json_file, close_fd=close_fd)
@@ -205,9 +204,9 @@ def main():
     cli.add_argument("--suffix", dest="suffix", required=False, default=".pdf", type=str, choices=valid_suffix,
                      help="suffix of file to save figure, if specified file ends with 'suffix', "
                           "suffix here will be ignored.")
-    cli.add_argument("-x", "--xlabel", required=False, dest="xlabel", type=str, default="Guesses",
+    cli.add_argument("-x", "--xlabel", required=False, dest="xlabel", type=str, default="X-axis",
                      help="what does x axis mean")
-    cli.add_argument("-y", "--ylabel", required=False, dest="ylabel", type=str, default="Cracked",
+    cli.add_argument("-y", "--ylabel", required=False, dest="ylabel", type=str, default="Y-axis",
                      help="what does y axis mean")
     cli.add_argument("--xlabel-weight", required=False, dest="xlabel_weight", type=str, default="normal",
                      choices=["normal", "bold"], help="weight of x label")
@@ -256,8 +255,11 @@ def main():
                      choices=["linear", "log", "symlog", "logit"], help="scale x axis")
     cli.add_argument("--yscale", required=False, dest="yscale", type=str, default="linear",
                      choices=["linear", "log", "symlog", "logit"], help="scale y axis")
-    cli.add_argument("--tight", required=False, dest="tight", default=False, action="store_true",
-                     help="tight layout of figure")
+    cli.add_argument("--tight", required=False, dest="tight",
+                     default=lambda: bool(print("Use --no-tight please, we set tight layout by default now")),
+                     action="store_true", help="tight layout of figure")
+    cli.add_argument("--no-tight", required=False, dest="no_tight", default=False, action="store_true",
+                     help="no tight layout of figure")
     cli.add_argument("--vlines", required=False, dest="vlines", type=float, nargs="*", default=[],
                      help="vlines in the figure")
     cli.add_argument("--vline-width", required=False, dest="vline_width", type=float, nargs="*", default=[],
