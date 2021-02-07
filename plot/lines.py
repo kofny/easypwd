@@ -77,6 +77,7 @@ class PlotParams:
         self.fig_size = args.fig_size
         self.no_boarder = args.no_boarder
         self.show_text = args.show_text
+        self.use_rate = args.use_rate
 
         if not (len(self.vlines) == len(self.vline_width) == len(self.vline_color) == len(self.vlines)):
             print(f"vlines should have same number of parameters", file=sys.stderr)
@@ -97,11 +98,11 @@ class PlotParams:
 
 
 class LineParam:
-    def __init__(self, json_file: TextIO, close_fd: bool, percent: bool = True):
+    def __init__(self, json_file: TextIO, close_fd: bool, use_rate: bool = True):
         data = json.load(json_file)
         y_list = data["y_list"]
         total = data["total"]
-        if percent:
+        if use_rate:
             y_list = [cracked / total * 100 for cracked in y_list]
         if close_fd:
             json_file.close()
@@ -132,7 +133,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     fig.set_tight_layout(plot_params.tight_layout)
     label_line = defaultdict(list)
     for json_file in json_files:
-        line_params = LineParam(json_file=json_file, close_fd=close_fd)
+        line_params = LineParam(json_file=json_file, close_fd=close_fd, use_rate=plot_params.use_rate)
         line, = plt.plot(line_params.x_list, line_params.y_list, color=line_params.color,
                          marker=line_params.marker, markersize=line_params.marker_size,
                          markevery=line_params.mark_every, linewidth=line_params.line_width,
@@ -283,6 +284,9 @@ def main():
                      help='do not display boarder listed here')
     cli.add_argument("--show-text", required=False, dest="show_text", action="store_true",
                      help="show label text at right")
+    cli.add_argument("--use-rate", required=False, dest="use_rate", action="store_true",
+                     help="Use the rate of y, e.g., y_1 = 1, total = 10, "
+                          "then we display y_1 = 1/10 = 0.1 instead of 1 in the figure")
     args = cli.parse_args()
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])
     if not suffix_ok:
