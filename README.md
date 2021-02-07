@@ -9,7 +9,7 @@ Code implemented in Python will use only builtin packages if possible. lines.py 
 - compare plaintext passwords line by line: **plainpwdcmp**
 - get training set and testing set from a corpus: **split2.py**
 - sample some passwords from a corpus: **samp.py**
-- draw guess-crack figure: **gutify.py & lines.py**
+- draw guess-crack figure: **j4rank.py & lines.py**
 - remove unwanted passwords: **cleaning.py**
 - get min_auto of a password dataset: **minrank.py**
 - remove passwords in training set and testing set: **havemenot.py**

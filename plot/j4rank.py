@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Easy toolkit for Guess-Crack Curve
+Easy toolkit for Guess Number Curve
 This is a method to beautify the data of guesses and cracked file
 """
 import argparse
@@ -145,7 +145,7 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
 
 
 def main():
-    cli = argparse.ArgumentParser("Beautify Guess-Crack result file")
+    cli = argparse.ArgumentParser("Beautify Guess-Crack result file: json for rank (j4rank)")
     cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
                      help="how to identify this curve")
     cli.add_argument("-f", "--gc", required=False, dest="fd_gc", type=argparse.FileType("r"),
