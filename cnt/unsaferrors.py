@@ -63,9 +63,8 @@ def wrapper():
     a_easy_b_hard, a_hard_b_easy, total = count_unsafe(
         read_raw_data(args.fd_a, args.skip, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq),
         read_raw_data(args.fd_b, args.skip, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq))
-    print(a_easy_b_hard)
-    print(f"a easiest 25% in b hardest 25%: {len(a_easy_b_hard):8}, {len(a_easy_b_hard) / total * 100:5.2}%")
-    print(f"a hardest 25% in b easiest 25%: {len(a_hard_b_easy):8}, {len(a_hard_b_easy) / total * 100:5.2}%")
+    print(f"a easiest 25% in b hardest 25%: {len(a_easy_b_hard):8}, {len(a_easy_b_hard) / total * 100:5.2f}%")
+    print(f"a hardest 25% in b easiest 25%: {len(a_hard_b_easy):8}, {len(a_hard_b_easy) / total * 100:5.2f}%")
     pass
 
 
