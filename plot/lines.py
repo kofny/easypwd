@@ -258,7 +258,8 @@ def main():
                      choices=["linear", "log", "symlog", "logit"], help="scale y axis")
     cli.add_argument("--tight", required=False, dest="tight",
                      default=lambda: bool(print("Use --no-tight please, we set tight layout by default now")),
-                     action="store_true", help="tight layout of figure")
+                     action="store_true", help="tight layout of figure. Use --no-tight and"
+                                               "do not use this option anymore.", )
     cli.add_argument("--no-tight", required=False, dest="no_tight", default=False, action="store_true",
                      help="no tight layout of figure")
     cli.add_argument("--vlines", required=False, dest="vlines", type=float, nargs="*", default=[],
