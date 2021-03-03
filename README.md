@@ -21,6 +21,8 @@ Code implemented in Python will use only builtin packages if possible. lines.py 
 - fitting PDF-Zipf model: **PDFZipf.py**
 - identifying leet patterns: **leet.py**
 - identifying keyboard patterns: **kbd.py**
+- calculating unsafe errors: **unsaferrors.py**
+- comparing the change of ranks between guessing methods: **rankcmp.py**
 
 ## 1. plainpwdcmp
 
