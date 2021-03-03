@@ -3,18 +3,23 @@
 Calculation of Unsafe Errors
 """
 import argparse
+import re
 from math import floor, ceil
 from typing import TextIO, Tuple, Set
 
 
-def read_raw_data(fd: TextIO, splitter="\t", idx_pwd=0, idx_rank=1, idx_num=2):
+def read_raw_data(fd: TextIO, skip=1, splitter=re.compile("\t"), idx_pwd=0, idx_rank=1, idx_num=2):
     lst = []
+    for _ in range(skip):
+        fd.readline()
     for line in fd:
-        items = line.split(splitter)
+        line = line.strip("\r\n")
+        items = splitter.split(line)
         pwd = items[idx_pwd]
         rank = float(items[idx_rank])
         num = int(items[idx_num])
         lst.append((pwd, rank, num))
+    fd.close()
     lst = sorted(lst, key=lambda x: x[1])
     num_list = [n for _, _, n in lst]
     total = sum(num_list)
@@ -49,9 +54,18 @@ def wrapper():
                      help="ranks are in \"idx-rank\"th column, start from 0")
     cli.add_argument("--idx-freq", dest="idx_freq", required=True, type=int,
                      help="frequencies are in \"idx-freq\"th column, start from 0")
+    cli.add_argument("-k", "--skip", dest="skip", required=False, type=int, default=1,
+                     help="Ignore the first k lines")
+    cli.add_argument("-s", '--splitter', dest="splitter", type=lambda x: re.compile(x), required=False,
+                     default=re.compile("\t"),
+                     help="splitter of the lines")
     args = cli.parse_args()
-    count_unsafe(read_raw_data(args.fd_a, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq),
-                 read_raw_data(args.fd_b, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq))
+    a_easy_b_hard, a_hard_b_easy, total = count_unsafe(
+        read_raw_data(args.fd_a, args.skip, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq),
+        read_raw_data(args.fd_b, args.skip, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq))
+    print(a_easy_b_hard)
+    print(f"a easiest 25% in b hardest 25%: {len(a_easy_b_hard):8}, {len(a_easy_b_hard) / total * 100:5.2}%")
+    print(f"a hardest 25% in b easiest 25%: {len(a_hard_b_easy):8}, {len(a_hard_b_easy) / total * 100:5.2}%")
     pass
 
 
