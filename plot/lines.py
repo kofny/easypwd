@@ -77,7 +77,7 @@ class PlotParams:
         self.fig_size = args.fig_size
         self.no_boarder = args.no_boarder
         self.show_text = args.show_text
-        self.use_rate = args.use_rate
+        self.use_rate = not args.use_acc_freq
 
         if not (len(self.vlines) == len(self.vline_width) == len(self.vline_color) == len(self.vlines)):
             print(f"vlines should have same number of parameters", file=sys.stderr)
@@ -285,9 +285,9 @@ def main():
                      help='do not display boarder listed here')
     cli.add_argument("--show-text", required=False, dest="show_text", action="store_true",
                      help="show label text at right")
-    cli.add_argument("--use-rate", required=False, dest="use_rate", action="store_true",
-                     help="Use the rate of y, e.g., y_1 = 1, total = 10, "
-                          "then we display y_1 = 1/10 = 0.1 instead of 1 in the figure")
+    cli.add_argument("--use-acc-freq", required=False, dest="use_acc_freq", action="store_true",
+                     help="Use the acc freq of y, e.g., y_1 = 1, total = 10, "
+                          "then we display y_1 = 1 instead of 1/10 in the figure")
     args = cli.parse_args()
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])
     if not suffix_ok:
