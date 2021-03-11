@@ -47,15 +47,17 @@ def wrapper():
     total = sum(counter.values())
     given = {k: counter.get(k, 0) for k in entries}
     onlyGiven = sum(given.values())
-    print(f"The format in the result file is shown as follows.\n"
-          f"`Entry`{args.splitter.pattern}"
-          f"`Frequency over given entries`{args.splitter.pattern}"
-          f"`Frequency over all entries`")
+    print(f"Containing given entries: {onlyGiven},\n"
+          f"Total entries: {total},\n"
+          f"Proportion: {onlyGiven / total * 100:7.4f}%")
+    top = 10
+    i = 0
     for entry, freq in sorted(given.items(), key=lambda x: x[1], reverse=True):
-        args.save.write(
-            f"{entry}{args.splitter.pattern}"
-            f"{freq / onlyGiven * 100:5.2f}{args.splitter.pattern}"
-            f"{freq / total * 100:5.2f}\n")
+        to_print = f"{entry}{args.splitter.pattern}{freq:8}{args.splitter.pattern}{freq / total * 100:7.4f}\n"
+        if i < top:
+            print(to_print, end="")
+            i += 1
+        args.save.write(to_print)
     pass
 
 
