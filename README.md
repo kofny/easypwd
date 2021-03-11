@@ -23,6 +23,7 @@ Code implemented in Python will use only builtin packages if possible. lines.py 
 - identifying keyboard patterns: **kbd.py**
 - calculating unsafe errors: **unsaferrors.py**
 - comparing the change of ranks between guessing methods: **rankcmp.py**
+- count the proportion of given entries in a dictionary with frequencies: **entry.py**
 
 ## 1. plainpwdcmp
 
