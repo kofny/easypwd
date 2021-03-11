@@ -32,6 +32,7 @@ import os
 import pickle
 import re
 import traceback
+from math import floor, ceil
 from typing import List, TextIO, Dict, Set, Tuple
 
 import itertools
@@ -511,21 +512,23 @@ def invalid(word: str):
     # pure alphas, pure digits, or pure others
     if limit_alpha(word):
         return True
-    if word.startswith("#1") or word.endswith("#1"):
-        return True
+    # if word.startswith("#1") or word.endswith("#1"):
+    #     return True
     counter = collections.Counter(lower)
     # 5i5i5i5i, o00oo0o
-    if len(counter) < 3 or max(counter.values()) >= len(word) / 2:
+    if min(counter.values()) <= ceil(len(word) / len(counter)) \
+            or max(counter.values()) >= floor(len(word) / len(counter)):
         return True
+    res = re.compile("[^a-zA-Z]").split(word)
     # li1li1li1, o0po0po0p
-    if len(counter) == 3 and len(word) >= 6 and max(counter.values()) >= len(word) / 3:
-        return True
+    # if len(counter) == 3 and len(word) >= 6 and max(counter.values()) >= len(word) / 3:
+    #     return True
     # xxx!
-    if lower[:-1].isalpha() and lower[-1:] == '!':
-        return True
+    # if lower[:-1].isalpha() and lower[-1:] == '!':
+    #     return True
     # xxx4ever
-    if 9 > wlen > 5 and lower[-5:] == '4ever' and (lower[:-5].isalpha() or lower[:-5].isdigit()):
-        return True
+    # if 9 > wlen > 5 and lower[-5:] == '4ever' and (lower[:-5].isalpha() or lower[:-5].isdigit()):
+    #     return True
     return re_invalid.search(lower)
 
 
@@ -707,6 +710,7 @@ class AsciiL33tDetector:
                     count = self.multi_word_detector.get_count(substr)
                     if count >= self.multi_word_detector.threshold:
                         raw_leets.append(raw_word)
+                        break
                         # return True, unleeted
                 # valid.append((unleeted, count))
         return len(raw_leets) > 0, raw_leets
