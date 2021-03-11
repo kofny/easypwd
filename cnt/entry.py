@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Given a number of entries, and a map containing entries and frequencies,
 count the frequency of given entries.
