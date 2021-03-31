@@ -34,7 +34,7 @@ def main():
     cli.add_argument("-o", "--output", required=False, dest="output", type=argparse.FileType("w"),
                      default=sys.stdout, help="save filtered password here")
     cli.add_argument("-p", "--regex", required=False, dest="valid_chr_re",
-                     type=lambda k: re.compile(k.replace("\\\\", "\\")),
+                     type=lambda k: re.compile(k),
                      default=re.compile(r"^[a-zA-Z0-9\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]{4,255}$"))
     args = cli.parse_args()
     cleaning(args.dataset, args.encoding, args.output, args.valid_chr_re)

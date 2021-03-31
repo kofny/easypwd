@@ -68,9 +68,10 @@ def main():
     cli.add_argument("-d", '--discard', dest='ratio4discard', required=False, type=int, default=0,
                      help="ignore this part of passwords, d / (a + b + d)")
     cli.add_argument("-p", "--regex", required=False, dest="valid_chr_re",
-                     type=lambda k: re.compile(k.replace("\\\\", "\\")),
+                     type=lambda k: re.compile(k),
                      default=re.compile(r"^[a-zA-Z0-9\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]{4,255}$"),
-                     help="passwords matched by this regex will be kept and used to split")
+                     help="passwords matched by this regex will be kept and used to split. "
+                          "Use re with the format of $'re'")
     args = cli.parse_args()
     args.ratio4discard = max(0, args.ratio4discard)
     if args.ratio4train < 1 or args.ratio4test < 1:
