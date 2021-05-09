@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 The original format of a line in the given source file is :
 <p1234p>\t<A1D4A1>
@@ -28,7 +29,7 @@ def read_pwd(fd: TextIO, testing: TextIO, save: TextIO):
             struct = items[1]
             terminals = terminal_re.findall(struct)
             start = 0
-            lst = [pwd, test_set[line]]
+            lst = [pwd, f"{test_set[pwd]}"]
             for terminal in terminals:
                 # tag = terminal[0]
                 num = int(terminal[1:])

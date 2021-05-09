@@ -11,6 +11,9 @@ from typing import TextIO, List, Any
 
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
+import matplotlib
+
+matplotlib.rcParams['pdf.fonttype'] = 42
 
 
 class DefaultVal:

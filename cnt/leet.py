@@ -467,16 +467,12 @@ def save_l33t_found(l33ts: Dict[str, int]) -> None:
 # this is a hack
 re_invalid = re.compile(
     r"^("
-    r"[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e0-9]{1,3}[a-z]{1,3}"  # except (S or D) + L
-    r"|[0-9]+[a-z]{1,2}|[a-z]{1,2}[0-9]+"  # remove m150, 
-    r"|[a-z]{1,3}[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e0-9]{1,3}"  # except L + (S or D)
-    r"|[02356789@]{1,2}[a-z]+"  # except 5scott
-    r"|[a-z0-9]4(ever|life)"  # except a4ever, b4ever
-    r"|1[a-z]{1,4}[^u]"  # except 1hateu, 1loveu
-    r"|1il(ov|uv).+"  # except 1iloveyou
-    r"|[a-z]{3,}[0-9$]+"
-    r"|(000)?we?bh(o?st)?)$")
-
+    r".{1,3}"
+    r"|[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e0-9]+[a-z]+"  # except (S or D) + L
+    r"|[a-z]+[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e0-9]+"  # except L + (S or D)
+    r"|.*[i1l|]{3,}.*"  # except il|a, il|b
+    r"|[a-z0-9]{1,2}4(ever|life)"  # except a4ever, b4ever
+    r")$")
 # ignore words in this set
 ignore_set = load_l33t_ign()
 # words in this set will be treated as l33t and will not detect again.
@@ -503,7 +499,6 @@ def invalid(word: str):
     :return:
     """
     lower = word.lower()
-    wlen = len(word)
     if lower in ignore_set:
         return True
     # length ~ [4, 20]
@@ -517,18 +512,8 @@ def invalid(word: str):
     counter = collections.Counter(lower)
     # 5i5i5i5i, o00oo0o
     if min(counter.values()) <= ceil(len(word) / len(counter)) \
-            or max(counter.values()) >= floor(len(word) / len(counter)):
+            and max(counter.values()) >= floor(len(word) / len(counter)):
         return True
-    res = re.compile("[^a-zA-Z]").split(word)
-    # li1li1li1, o0po0po0p
-    # if len(counter) == 3 and len(word) >= 6 and max(counter.values()) >= len(word) / 3:
-    #     return True
-    # xxx!
-    # if lower[:-1].isalpha() and lower[-1:] == '!':
-    #     return True
-    # xxx4ever
-    # if 9 > wlen > 5 and lower[-5:] == '4ever' and (lower[:-5].isalpha() or lower[:-5].isdigit()):
-    #     return True
     return re_invalid.search(lower)
 
 
@@ -701,8 +686,11 @@ class AsciiL33tDetector:
             # unleeted = "".join(unleeted)
             if not "".join(unleeted).isalpha():
                 continue
+            next_i = 0
             for i in range(0, len(unleeted)):
-                for j in range(len(unleeted), i + 1, -1):
+                if i < next_i:
+                    continue
+                for j in range(len(unleeted), i + self.__min_l33ts - 1, -1):
                     substr = "".join(unleeted[i:j])
                     raw_word = word[i:j]
                     if len(substr) < self.__min_l33ts or invalid(raw_word):
@@ -710,7 +698,10 @@ class AsciiL33tDetector:
                     count = self.multi_word_detector.get_count(substr)
                     if count >= self.multi_word_detector.threshold:
                         raw_leets.append(raw_word)
+                        next_i = j
                         break
+                    else:
+                        next_i = i + 1
                         # return True, unleeted
                 # valid.append((unleeted, count))
         return len(raw_leets) > 0, raw_leets
