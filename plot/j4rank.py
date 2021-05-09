@@ -70,6 +70,8 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
         cracked = 0
         for guesses, pwd in enumerate(pwd_dict):
             if pwd not in test_items:
+                guesses_list.append(guesses)
+                cracked_list.append(cracked)
                 continue
             cracked += test_items[pwd]
             del test_items[pwd]
