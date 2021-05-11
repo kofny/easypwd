@@ -148,10 +148,14 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         del line_params
     plt.xscale(plot_params.xscale)
     plt.yscale(plot_params.yscale)
-    if plot_params.xlim_low != DefaultVal.lim_low and plot_params.xlim_high != DefaultVal.lim_high:
-        plt.xlim([plot_params.xlim_low, plot_params.xlim_high])
-    if plot_params.ylim_low != DefaultVal.lim_low and plot_params.ylim_high != DefaultVal.lim_high:
-        plt.ylim([plot_params.ylim_low, plot_params.ylim_high])
+    if plot_params.xlim_low != DefaultVal.lim_low:
+        plt.xlim(left=plot_params.xlim_low)
+    if plot_params.xlim_high != DefaultVal.lim_high:
+        plt.xlim(right=plot_params.xlim_high)
+    if plot_params.ylim_low != DefaultVal.lim_low:
+        plt.ylim(bottom=plot_params.ylim_low)
+    if plot_params.ylim_high != DefaultVal.lim_high:
+        plt.ylim(top=plot_params.ylim_high)
     plt.xlabel(xlabel=plot_params.xlabel,
                fontdict={"weight": plot_params.xlabel_weight,
                          "size": plot_params.xlabel_size})
