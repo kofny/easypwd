@@ -7,24 +7,15 @@ import argparse
 import sys
 from collections import defaultdict
 from typing import TextIO, Dict, Generator, Tuple, Any
-import binascii
-
-
-def hex2str(hex_str):
-    _hex = hex_str.encode('utf-8')
-    str_bin = binascii.unhexlify(_hex)
-    return str_bin.decode('utf-8')
 
 
 def read_hc_res(hc_res: TextIO,
-                hash_idx: int = 0, pwd_idx: int = 1, guess_number_idx: int = 2) -> Dict[str, int]:
+                hash_idx: int = 0, pwd_idx: int = 1, guess_number_idx: int = -1) -> Dict[str, int]:
     hashes_pos = {}
     for line in hc_res:
         line = line.strip("\r\n")
         items = line.split(":")
         _hash, _pwd, _guess_number = items[hash_idx], items[pwd_idx], items[guess_number_idx]
-        if _pwd.startswith(r'#HEX['):
-            _pwd = hex2str(_pwd[5:-1])
         hashes_pos[_hash] = int(_guess_number)
     return hashes_pos
 
