@@ -34,7 +34,12 @@ def count_test_set(file: TextIO, close_fd: bool = False):
     count = defaultdict(int)
     for line in file:
         line = line.strip("\r\n")
-        count[line] += 1
+        try:
+            t, cnt = line.split("\t")
+            cnt = int(cnt)
+        except Exception:
+            t, cnt = line, 1
+        count[t] += cnt
     if close_fd:
         file.close()
     return count
@@ -157,7 +162,8 @@ def main():
     cli.add_argument("-d", "--dict-attack", required=False, dest="fd_dict", type=argparse.FileType('r'),
                      default=None, help="apply dict attack first")
     cli.add_argument("-t", "--test", required=True, dest="fd_test", type=argparse.FileType('r'),
-                     help="test set, to count number of passwords in test set")
+                     help="test set, to count number of passwords in test set. "
+                          "Note that you can make one password per line or (passwor, count) per line")
     cli.add_argument("--lower", required=False, dest="lower_bound", default=0, type=int,
                      help="guesses less than this will be ignored and will not appear in beautified json file")
     cli.add_argument("--upper", required=False, dest="upper_bound", default=10 ** 18, type=int,
