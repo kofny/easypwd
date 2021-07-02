@@ -9,7 +9,7 @@ from typing import List, TextIO, Dict, Tuple
 import sys
 
 
-def read_bpe_vocab(f_bpe_vocab: TextIO) -> Dict[str]:
+def read_bpe_vocab(f_bpe_vocab: TextIO) -> Dict[str, int]:
     chunks = {}
     for line in f_bpe_vocab:
         line = line.strip("\r\n")
@@ -37,7 +37,7 @@ def maxmatch(given_string: str, vocab: Dict[str, int], stack: List[str], matched
              wanted: List[str]):
     if matched_length == target_length:
         for item in stack:
-            wanted.append(vocab[item])
+            wanted.append(item)
         return
     if len(wanted) > 0:
         return
@@ -53,21 +53,22 @@ def maxmatch(given_string: str, vocab: Dict[str, int], stack: List[str], matched
     pass
 
 
-def avg_rank(cracked: Dict[Tuple[int, int], Dict[str, int]], vocab: Dict[str, int], end="\x03") \
-        -> Dict[Tuple[int, int], float]:
-    ranks = dict()
+def avg_rank(cracked: Dict[Tuple[int, int], Dict[str, int]], vocab: Dict[str, int], end="\x01") \
+        -> Tuple[int, int, float]:
+    res = []
     for r, pwd_cnt in sorted(cracked.items(), key=lambda x: x[0][0]):
         total_sum = 0
         total_cnt = 0
         for pwd, cnt in pwd_cnt.items():
             wanted = []
             maxmatch(pwd + end, vocab, [], 0, len(pwd) + len(end), wanted)
-            total_sum += sum(wanted)
-            total_cnt += len(wanted)
+            ranks = [vocab[i] for i in wanted]
+            total_sum += sum(ranks)
+            total_cnt += len(ranks)
         if total_cnt > 0:
             avg = total_sum / total_cnt
-            ranks[r] = avg
-    return ranks
+            res.append((r, avg))
+    return res
 
 
 def wrapper():
