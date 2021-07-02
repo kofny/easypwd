@@ -13,9 +13,14 @@ def read_bpe_vocab(f_bpe_vocab: TextIO) -> Dict[str, int]:
     chunks = {}
     for line in f_bpe_vocab:
         line = line.strip("\r\n")
-        chunk, _ = line.split(" ")
-        chunks[chunk] = len(chunks) + 1
+        chunk, count = line.split(" ")
+        count = int(count)
+        chunks[chunk] = count
     f_bpe_vocab.close()
+    i = 1
+    for chunk, count in sorted(chunks.items(), key=lambda x: x[1], reverse=True):
+        chunks[chunk] = i
+        i += 1
     return chunks
 
 
