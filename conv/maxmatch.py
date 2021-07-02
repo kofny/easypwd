@@ -2,11 +2,9 @@
 This is a py file used to split a given line based on maximum matching
 """
 import argparse
-import copy
 import json
-from typing import List, TextIO, Dict, Tuple, Set
-
 from collections import defaultdict
+from typing import List, TextIO, Dict, Tuple
 
 import sys
 
