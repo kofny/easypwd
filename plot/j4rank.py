@@ -82,7 +82,7 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
             del test_items[pwd]
             if guesses < lower_bound:
                 continue
-            if guesses > upper_bound:
+            if guesses > upper_bound or guesses > 10 ** 50:
                 break
             guesses_list.append(guesses)
             cracked_list.append(cracked)

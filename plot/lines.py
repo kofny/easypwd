@@ -169,6 +169,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     # direction and size of ticks
     plt.tick_params(axis='x', labelsize=plot_params.tick_size, direction=plot_params.xtick_direction)
     plt.tick_params(axis='y', labelsize=plot_params.tick_size, direction=plot_params.ytick_direction)
+    plt.tick_params(axis='both', which='minor', length=0)
     # v line
     for vline_x, vline_width, vline_color, vline_style, vline_label in \
             zip(plot_params.vlines, plot_params.vline_width,

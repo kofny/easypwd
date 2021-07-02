@@ -12,7 +12,12 @@ def read_test(fd_test: TextIO):
     pwd_cnt = defaultdict(int)
     for line in fd_test:
         line = line.strip()
-        pwd_cnt[line] += 1
+        try:
+            p, cnt = line.split("\t")
+            cnt = int(cnt)
+        except Exception:
+            p, cnt = line, 1
+        pwd_cnt[p] += cnt
     fd_test.close()
     return pwd_cnt
 

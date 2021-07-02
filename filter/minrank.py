@@ -6,13 +6,20 @@ import argparse
 import sys
 from typing import TextIO, Dict, Generator, List
 
+from math import ceil
+
 
 def init_targets(targets: TextIO):
     pwd_rank = {}
     for line in targets:
         line = line.strip("\r\n")
-        num, _ = pwd_rank.get(line, (0, 0))
-        pwd_rank[line] = (num + 1, sys.float_info.max)
+        try:
+            pwd, cnt = line.split("\t")
+            cnt = int(cnt)
+        except Exception:
+            pwd, cnt = line, 1
+        num, _ = pwd_rank.get(pwd, (0, 0))
+        pwd_rank[pwd] = (num + cnt, sys.float_info.max)
     return pwd_rank
 
 
@@ -20,7 +27,7 @@ def read_scored(scored: TextIO, splitter: str):
     for line in scored:
         line = line.strip("\r\n")
         pwd, _, _, rank, _, _ = line.split(splitter)
-        yield pwd, int(rank)
+        yield pwd, int(float(rank) + 0.5)
 
 
 def parse_rank(pwd_rank: Dict, model_rank: Generator):
@@ -46,7 +53,7 @@ def wrapper(targets: TextIO, scored_files: List[TextIO], splitter: str, save2: T
     cracked = 0
     for pwd, (num, rank) in sorted(pwd_rank.items(), key=lambda x: x[1][1], reverse=False):
         cracked += num
-        rank = round(max(rank, prev_rank + 1))
+        rank = ceil(max(rank, prev_rank + 1))
         save2.write(f"{pwd}\t{0.0}\t{num}\t{rank}\t{cracked}\t{cracked / total * 100:5.2f}\n")
         pass
     save2.flush()
