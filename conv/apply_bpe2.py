@@ -115,19 +115,22 @@ class BPE(object):
 
     def process_line(self, line, dropout=0):
         """segment line, dealing with leading and trailing whitespace"""
-
+        try:
+            pwd, _, _, _, _, _ = line.strip("\r\n").split("\t")
+        except ValueError:
+            pwd = line.strip("\r\n")
         out = ""
 
-        leading_whitespace = len(line) - len(line.lstrip('\r\n '))
+        leading_whitespace = len(pwd) - len(pwd.lstrip('\r\n '))
         if leading_whitespace:
-            out += line[:leading_whitespace]
+            out += pwd[:leading_whitespace]
 
-        out += self.segment(line, dropout)
+        out += self.segment(pwd, dropout)
 
-        trailing_whitespace = len(line) - len(line.rstrip('\r\n '))
-        if trailing_whitespace and trailing_whitespace != len(line):
-            out += line[-trailing_whitespace:]
-
+        trailing_whitespace = len(pwd) - len(pwd.rstrip('\r\n '))
+        if trailing_whitespace and trailing_whitespace != len(pwd):
+            out += pwd[-trailing_whitespace:]
+        out += "\n"
         return out
 
     def segment(self, sentence, dropout=0):
@@ -178,7 +181,7 @@ def _process_lines(bpe, filename, outfile, dropout, begin, end):
         while line:
             pos = f.tell()
             assert 0 <= pos < 1e20, "Bad new line separator, e.g. '\\r'"
-            if end > 0 and pos > end:
+            if 0 < end < pos:
                 break
             fo.write(bpe.process_line(line, dropout))
             line = f.readline()
@@ -219,15 +222,18 @@ def create_parser(subparsers=None):
     parser.add_argument(
         '--vocabulary', type=argparse.FileType('r'), default=None,
         metavar="PATH",
-        help="Vocabulary file (built with get_vocab.py). If provided, this script reverts any merge operations that produce an OOV.")
+        help="Vocabulary file (built with get_vocab.py). If provided, this script reverts any merge operations "
+             "that produce an OOV.")
     parser.add_argument(
         '--vocabulary-threshold', type=int, default=None,
         metavar="INT",
-        help="Vocabulary threshold. If vocabulary is provided, any word with frequency < threshold will be treated as OOV")
+        help="Vocabulary threshold. If vocabulary is provided, "
+             "any word with frequency < threshold will be treated as OOV")
     parser.add_argument(
         '--dropout', type=float, default=0,
         metavar="P",
-        help="Dropout BPE merge operations with probability P (Provilkov et al., 2019). Use this on training data only.")
+        help="Dropout BPE merge operations with probability P (Provilkov et al., 2019). "
+             "Use this on training data only.")
     parser.add_argument(
         '--glossaries', type=str, nargs='+', default=None,
         metavar="STR",
@@ -240,8 +246,10 @@ def create_parser(subparsers=None):
         help="Random seed for the random number generators (e.g. for BPE dropout with --dropout).")
     parser.add_argument(
         '--num-workers', type=int, default=1,
-        help="Number of processors to process texts, only supported in Python3. If -1, set `multiprocessing.cpu_count()`. (default: %(default)s)")
-
+        help="Number of processors to process texts, only supported in Python3. If -1, "
+             "set `multiprocessing.cpu_count()`. (default: %(default)s)")
+    parser.add_argument("--ranges", dest="ranges", type=int, required=False,
+                        default=[1, 100, 10000, 10 ** 6, 10 ** 8, 10 ** 10, 10 ** 12, 10 ** 14], nargs="+")
     return parser
 
 
@@ -254,7 +262,7 @@ def encode(orig, bpe_codes, bpe_codes_reverse, vocab, separator, version, cache,
 
     if glossaries_regex and glossaries_regex.match(orig):
         cache[orig] = (orig,)
-        return (orig,)
+        return orig,
 
     if len(orig) == 1:
         return orig
@@ -285,7 +293,8 @@ def encode(orig, bpe_codes, bpe_codes_reverse, vocab, separator, version, cache,
         new_word = []
         bigram = ''.join(bigram)
         for j in positions:
-            # merges are invalid if they start before current position. This can happen if there are overlapping pairs: (x x x -> xx x)
+            # merges are invalid if they start before current position. This can happen if there are overlapping pairs:
+            # (x x x -> xx x)
             if j < i:
                 continue
             new_word.extend(word[i:j])  # all symbols before merged pair
@@ -370,7 +379,7 @@ def read_vocabulary(vocab_file, threshold):
     for line in vocab_file:
         word, freq = line.strip('\r\n ').split(' ')
         freq = int(freq)
-        if threshold == None or freq >= threshold:
+        if threshold is None or freq >= threshold:
             vocabulary.add(word)
 
     return vocabulary
@@ -395,14 +404,30 @@ def isolate_glossary(word, glossary):
         return segments + [ending.strip('\r\n ')] if ending != '' else segments
 
 
-if __name__ == '__main__':
+def read_cracked(f_cracked, ranges):
+    cracked = {}
+    for _line in f_cracked:
+        _line = _line.strip("\r\n")
+        pwd, _, count, guesses, _, _ = _line.split("\t")
+        guesses = int(guesses)
+        count = int(count)
+        for r in ranges:
+            left, right = r
+            if left <= guesses < right:
+                if r not in cracked:
+                    cracked[r] = {}
+                cracked[r][pwd] = count
+    return cracked
 
+
+def wrapper():
     currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     newdir = os.path.join(currentdir, 'subword_nmt')
     if os.path.isdir(newdir):
         warnings.simplefilter('default')
         warnings.warn(
-            "this script's location has moved to {0}. This symbolic link will be removed in a future version. Please point to the new location, or install the package and use the command 'subword-nmt'".format(
+            "this script's location has moved to {0}. This symbolic link will be removed in a future version. "
+            "Please point to the new location, or install the package and use the command 'subword-nmt'".format(
                 newdir),
             DeprecationWarning
         )
@@ -457,3 +482,49 @@ if __name__ == '__main__':
             args.output.write(bpe.process_line(line, args.dropout))
     else:
         bpe.process_lines(args.input.name, args.output, args.dropout, args.num_workers)
+
+    ranges = []
+    for i in range(len(args.ranges) - 1):
+        ranges.append((args.ranges[i], args.ranges[i + 1]))
+    if not args.input.seekable():
+        return
+    args.input.seek(0)
+    cracked = read_cracked(args.input, ranges)
+    vocab = {}
+    with open(args.output.name, 'r') as fin:
+        for line in fin:
+            chunks = [itm for itm in line.strip("\r\n").split(" ")]
+            for a in chunks:
+                if a not in vocab:
+                    vocab[a] = 0
+                vocab[a] += 1
+    vocab_ranks = {}
+    _rank = 1
+    for item, _ in sorted(vocab.items(), key=lambda x: x[1]):
+        vocab_ranks[item] = _rank
+        _rank += 1
+    target = {}
+    with open(args.output.name, 'r') as fin:
+        for line in fin:
+            chunks = [itm for itm in line.strip("\r\n").split(" ")]
+            pwd = "".join([itm.strip("\x01") for itm in chunks])
+            if pwd in target:
+                continue
+            ranks = [vocab_ranks[i] for i in chunks]
+            target[pwd] = ranks
+    res = []
+    for r, pwd_cnt in sorted(cracked.items(), key=lambda x: x[0][0]):
+        total_sum = 0
+        total_cnt = 0
+        for pwd, cnt in pwd_cnt.items():
+            ranks = target[pwd]
+            total_sum += sum(ranks)
+            total_cnt += len(ranks)
+        if total_cnt > 0:
+            avg = total_sum / total_cnt
+            res.append((r, avg))
+    print(res)
+
+
+if __name__ == '__main__':
+    wrapper()
