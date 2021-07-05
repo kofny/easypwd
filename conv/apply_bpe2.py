@@ -519,15 +519,18 @@ def wrapper():
     for r, pwd_cnt in sorted(cracked.items(), key=lambda x: x[0][0]):
         total_sum = 0
         total_cnt = 0
+        uniq = set()
         for pwd, cnt in pwd_cnt.items():
             chunks, ranks = target[pwd]
+            for c in ranks:
+                uniq.add(c)
             total_sum += sum(ranks)
             total_cnt += len(ranks)
             if args.debug is not None:
                 print(r, pwd, cnt, chunks, ranks, file=args.debug)
         if total_cnt > 0:
             avg = total_sum / total_cnt
-            res.append((r, avg))
+            res.append((r, avg, sum(uniq) / len(uniq)))
 
     print(res)
 
