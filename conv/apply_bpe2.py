@@ -528,6 +528,7 @@ def wrapper():
         if total_cnt > 0:
             avg = total_sum / total_cnt
             res.append((r, avg))
+
     print(res)
 
 
