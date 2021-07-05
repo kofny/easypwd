@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This is a py file used to split a given line based on maximum matching
 """
