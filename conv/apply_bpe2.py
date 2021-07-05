@@ -503,7 +503,7 @@ def wrapper():
                 vocab[a] += 1
     vocab_ranks = {}
     _rank = 1
-    for item, _ in sorted(vocab.items(), key=lambda x: x[1]):
+    for item, _ in sorted(vocab.items(), key=lambda x: x[1], reverse=True):
         vocab_ranks[item] = _rank
         _rank += 1
     target = {}
