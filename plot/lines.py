@@ -30,7 +30,7 @@ import json
 import os
 import sys
 from collections import defaultdict
-from typing import TextIO, List, Any
+from typing import TextIO, List, Any, Dict
 
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
@@ -125,33 +125,47 @@ class PlotParams:
 
 class LineParam:
     def __init__(self, json_file: TextIO, close_fd: bool, use_rate: bool = True):
-        data = json.load(json_file)
+        """
+        Note that x_list, y_list and total are required, while others are optional
+        :param json_file: json file
+        :param close_fd: close json file
+        :param use_rate: convert {number} to {percentage of number}
+        """
+        data: Dict[Any, Any] = json.load(json_file)
         y_list = data["y_list"]
-        total = data["total"]
         if use_rate:
-            y_list = [cracked / total * 100 for cracked in y_list]
+            if not data.get("total"):
+                print(f"the given file ``{json_file.name}`` contains no field of ``total``, "
+                      f"which is required when ``use-rate`` is true.\n"
+                      f"Therefore, use-rate becomes ``false`` by default", file=sys.stderr)
+            else:
+                total = data["total"]
+                y_list = [cracked / total * 100 for cracked in y_list]
         if close_fd:
             json_file.close()
         elif json_file.seekable():
             json_file.seek(0)
         self.x_list = data["x_list"]
         self.y_list = y_list
-        self.color = data['color']
-        self.marker = data['marker']
-        self.marker_size = data['marker_size']
-        self.mark_every = data["mark_every"]
-        self.line_width = data['line_width']
-        if type(data['line_style']) is str:
-            self.line_style = data['line_style']
+        self.color = data.get('color') or "black"
+        self.marker = data.get('marker') or None
+        self.marker_size = data.get('marker_size') or None
+        self.mark_every = data.get("mark_every") or None
+        self.line_width = data.get('line_width') or 1.2
+        if data.get("line_style"):
+            if type(data['line_style']) is str:
+                self.line_style = data['line_style']
+            else:
+                self.line_style = (data['line_style'][0], tuple(list(data['line_style'][1])))
         else:
-            self.line_style = (data['line_style'][0], tuple(list(data['line_style'][1])))
-        self.label = data['label']
-        self.text = data['label']
-        self.show_text = data['show_text']
-        self.text_x = data['text_x']
-        self.text_y = data['text_y']
-        self.text_fontsize = data['text_fontsize']
-        self.text_color = data['text_color']
+            self.line_style = "-"
+        self.label = data.get('label') or ""
+        self.text = data.get('label') or ""
+        self.show_text = data.get('show_text') or False
+        self.text_x = data.get('text_x') or -1
+        self.text_y = data.get('text_y') or -1
+        self.text_fontsize = data.get('text_fontsize') or 12
+        self.text_color = data.get('text_color') or "black"
 
 
 def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = True):

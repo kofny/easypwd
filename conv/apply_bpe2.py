@@ -13,6 +13,8 @@ Proceedings of the 54th Annual Meeting of the Association for Computational Ling
 
 from __future__ import unicode_literals, division
 
+import json
+
 import sys
 import os
 import inspect
@@ -251,6 +253,8 @@ def create_parser(subparsers=None):
     parser.add_argument("--ranges", dest="ranges", type=int, required=False,
                         default=[1, 100, 10000, 10 ** 6, 10 ** 8, 10 ** 10, 10 ** 12, 10 ** 14], nargs="+",
                         help="ranges of guess numbers")
+    parser.add_argument("--json", dest="json", type=argparse.FileType('w'), required=False, default=sys.stdout,
+                        help="save data in format of json to plot lines")
     parser.add_argument("--debug", dest="debug", type=argparse.FileType('w'), required=False, default=None,
                         help="save intermediate results into this file")
     return parser
@@ -515,7 +519,7 @@ def wrapper():
                 continue
             ranks = [vocab_ranks[i] for i in chunks]
             target[pwd] = chunks, ranks
-    res = []
+    x_list, y_list = [], []
     for r, pwd_cnt in sorted(cracked.items(), key=lambda x: x[0][0]):
         total_sum = 0
         total_cnt = 0
@@ -529,10 +533,12 @@ def wrapper():
             if args.debug is not None:
                 print(r, pwd, cnt, chunks, ranks, file=args.debug)
         if total_cnt > 0:
-            avg = total_sum / total_cnt
-            res.append((r, avg, sum(uniq) / len(uniq)))
-
-    print(res)
+            # avg = total_sum / total_cnt
+            plain_avg = sum(uniq) / len(uniq)
+            # res.append((r, avg, plain_avg))
+            x_list.append(r[1])
+            y_list.append(plain_avg)
+    print(json.dumps({"x_list": x_list, "y_list": y_list}), file=args.json)
 
 
 if __name__ == '__main__':
