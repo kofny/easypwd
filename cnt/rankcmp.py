@@ -83,7 +83,9 @@ def wrapper():
                      type=int, required=False, nargs='+', help="the thresholds of guess numbers")
     cli.add_argument("-d", "--display", dest="display",
                      default=['\\textgreater1e0', '\\textgreater1e4', '\\textgreater1e8', '\\textgreater1e12',
-                              '\\textgreater1e16', '\\textgreater1e20'])
+                              '\\textgreater1e16', '\\textgreater1e20'],
+                     type=str, required=False, nargs='+',
+                     help="How to show the thresholds in string (support LaTex format)")
     args = cli.parse_args()
     gen_table(args.thresholds, args.display,
               read_raw_data(args.fd_a, args.skip, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq),
