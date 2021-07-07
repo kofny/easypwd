@@ -18,9 +18,12 @@ def len_dist(dataset: TextIO, close_fd: bool = False) -> (int, Dict[int, int]):
     len_dict = defaultdict(int)
     for line in dataset:
         line = line.strip("\r\n")
-        total += 1
-        len_line = len(line)
-        len_dict[len_line] += 1
+        items = line.split("\t")
+        pwd = items[0]
+        cnt = int(items[1])
+        total += cnt
+        len_line = len(pwd)
+        len_dict[len_line] += cnt
     if close_fd:
         dataset.close()
     return total, len_dict
@@ -42,27 +45,31 @@ def chr_dist(dataset: TextIO, close_fd: bool = False) -> (int, Dict[str, int], D
     cls_number_dict = defaultdict(int)
     for line in dataset:
         line = line.strip("\r\n")
+        items = line.split("\t")
+        pwd = items[0]
+        cnt = int(items[1])
         cls_lst = {"upper": 0, "lower": 0, "digit": 0, "other": 0}
-        for c in line:
+        for c in pwd:
             if c.isalpha():
                 if c.isupper():
-                    cls_lst['upper'] += 1
+                    cls_lst['upper'] += cnt
                     # cls_dict["upper"] += 1
                 else:
-                    cls_lst['lower'] += 1
+                    cls_lst['lower'] += cnt
             elif c.isdigit():
-                cls_lst["digit"] += 1
+                cls_lst["digit"] += cnt
             else:
-                cls_lst["other"] += 1
+                cls_lst["other"] += cnt
             for k, v in cls_lst.items():
                 cls_dict[k] += v
-            cls_number = sum([1 if c > 0 else 0 for c in cls_lst.values()])
-            cls_number_dict[cls_number] += 1
-            chr_dict[c] += 1
+            chr_dict[c] += cnt
+
+        cls_number = sum([1 if c > 0 else 0 for c in cls_lst.values()])
+        cls_number_dict[cls_number] += cnt
     if close_fd:
         dataset.close()
     total_chr = sum(chr_dict.values())
-    return total_chr, chr_dict, cls_dict
+    return total_chr, chr_dict, cls_dict, cls_number_dict
 
 
 def wrapper(dataset: TextIO, save: TextIO):
@@ -72,13 +79,18 @@ def wrapper(dataset: TextIO, save: TextIO):
         raise Exception(f"{save.name} Not writable")
     total_size, len_dict = len_dist(dataset, False)
     dataset.seek(0)
-    total_chr, chr_dict, cls_dict = chr_dist(dataset, True)
+    total_chr, chr_dict, cls_dict, cls_number_dict = chr_dist(dataset, True)
+    avg_len = sum([k * v for k, v in len_dict.items()]) / total_size
+    avg_n_cls = sum([k * v for k, v in cls_number_dict.items()]) / total_size
     json.dump({
         "#len": total_size,
         "len": len_dict,
+        "avg_len": avg_len,
         "#chr": total_chr,
         "chr": chr_dict,
-        "cls": cls_dict
+        "cls": cls_dict,
+        "#cls": cls_number_dict,
+        "avg_#cls": avg_n_cls
     }, save, indent=2)
     save.close()
 
