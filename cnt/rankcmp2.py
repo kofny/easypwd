@@ -82,25 +82,27 @@ def gen_table(guess_number_thresholds: List[int], guess_number_display_list: Lis
                 for idx in range(len(tables)):
                     percent_val += tables[idx][i][j] / totals[idx]
                     real_val += tables[idx][i][j]
-
+                val = percent_val / len(tables) * 100 if percent else real_val // len(tables)
+                base = 100 if percent else baseline
+                color = min(1, val / base)
                 if real_val < len(tables):
                     cell_color = ""
                 elif i == j and cmap_d is not None:
-                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_d(min(1, real_val / baseline))[:3]])
+                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_d(color)[:3]])
                     cell_color = f"\\cellcolor[rgb]{{{rgb}}}"
                 elif i < j and cmap_tr is not None:
-                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_tr(min(1, real_val / baseline))[:3]])
+                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_tr(color)[:3]])
                     cell_color = f"\\cellcolor[rgb]{{{rgb}}}"
                 elif i > j and cmap_bl is not None:
-                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_bl(min(1, real_val / baseline))[:3]])
+                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_bl(color)[:3]])
                     cell_color = f"\\cellcolor[rgb]{{{rgb}}}"
                 else:
                     cell_color = ""
 
                 if percent:
-                    cell_value = f"{cell_color}{percent_val / len(tables) * 100:5.2f}\\%"
+                    cell_value = f"{cell_color}{val:5.2f}\\%"
                 else:
-                    cell_value = f"{cell_color}{real_val // len(tables):5d}"
+                    cell_value = f"{cell_color}{val:5d}"
 
                 print(cell_value, end=the_end)
 
