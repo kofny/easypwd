@@ -83,7 +83,7 @@ def gen_table(guess_number_thresholds: List[int], guess_number_display_list: Lis
                     percent_val += tables[idx][i][j] / totals[idx]
                     real_val += tables[idx][i][j]
 
-                if real_val < 1:
+                if real_val < len(tables):
                     cell_color = ""
                 elif i == j and cmap_d is not None:
                     cell_color = f"\\cellcolor[rgb]{{{', '.join([f'{itm:.6f}' for itm in cmap_d(percent_val)[:3]])}}}"
