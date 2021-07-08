@@ -113,6 +113,8 @@ def gen_table(guess_number_thresholds: List[int], guess_number_display_list: Lis
 
     print("\nPrint frequencies, LaTeX format")
     print_table(" & ", False, None, None, None)
+
+    print("\n--------------------All tables printed!-------------------\n")
     pass
 
 
