@@ -85,11 +85,11 @@ def gen_table(guess_number_thresholds: List[int], guess_number_display_list: Lis
                     real_val += tables[idx][i][j]
 
                 if i == j and cmap_d is not None:
-                    cell_color = f"\\cellcolor[rgb]{{{', '.join(cmap_d(percent_val)[:3])}}}"
+                    cell_color = f"\\cellcolor[rgb]{{{', '.join([f'{itm:.6f}' for itm in cmap_d(percent_val)[:3]])}}}"
                 elif i < j and cmap_tr is not None:
-                    cell_color = f"\\cellcolor[rgb]{{{', '.join(cmap_tr(percent_val[:3]))}"
+                    cell_color = f"\\cellcolor[rgb]{{{', '.join([f'{itm:.6f}' for itm in cmap_tr(percent_val)[:3]])}}}"
                 elif i > j and cmap_bl is not None:
-                    cell_color = f"\\cellcolor[rgb]{{{', '.join(cmap_bl(percent_val[:3]))}"
+                    cell_color = f"\\cellcolor[rgb]{{{', '.join([f'{itm:.6f}' for itm in cmap_bl(percent_val)[:3]])}}}"
                 else:
                     cell_color = ""
 
@@ -103,8 +103,15 @@ def gen_table(guess_number_thresholds: List[int], guess_number_display_list: Lis
     print("Print percentages, LaTeX format.\n"
           "file a is placed on the top of the table, file b is placed on the left of the table.")
     print_table(" & ", True)
-    print("Print frequencies, LaTeX format")
+    
+    print("\nPrint frequencies, LaTeX format")
     print_table(" & ", False)
+
+    print("\nPrint percentages, LaTeX format without colors.")
+    print_table(" & ", True, None, None, None)
+
+    print("\nPrint frequencies, LaTeX format")
+    print_table(" & ", False, None, None, None)
     pass
 
 
