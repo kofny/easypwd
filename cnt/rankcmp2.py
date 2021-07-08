@@ -53,7 +53,7 @@ def get_color_map(name: str):
 
 def gen_table(guess_number_thresholds: List[int], guess_number_display_list: List[str],
               map_as: List[Dict[str, Tuple[int, int]]], map_bs: List[Dict[str, Tuple[int, int]]],
-              color_map_bottom_left=None, color_map_top_right=None, color_map_diagonal=None):
+              color_map_bottom_left=None, color_map_top_right=None, color_map_diagonal=None, baseline=4000):
     tables = []
     totals = []
     for index in range(len(map_as)):
@@ -86,11 +86,14 @@ def gen_table(guess_number_thresholds: List[int], guess_number_display_list: Lis
                 if real_val < len(tables):
                     cell_color = ""
                 elif i == j and cmap_d is not None:
-                    cell_color = f"\\cellcolor[rgb]{{{', '.join([f'{itm:.6f}' for itm in cmap_d(percent_val)[:3]])}}}"
+                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_d(min(1, real_val / baseline))[:3]])
+                    cell_color = f"\\cellcolor[rgb]{{{rgb}}}"
                 elif i < j and cmap_tr is not None:
-                    cell_color = f"\\cellcolor[rgb]{{{', '.join([f'{itm:.6f}' for itm in cmap_tr(percent_val)[:3]])}}}"
+                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_tr(min(1, real_val / baseline))[:3]])
+                    cell_color = f"\\cellcolor[rgb]{{{rgb}}}"
                 elif i > j and cmap_bl is not None:
-                    cell_color = f"\\cellcolor[rgb]{{{', '.join([f'{itm:.6f}' for itm in cmap_bl(percent_val)[:3]])}}}"
+                    rgb = ', '.join([f'{itm:.6f}' for itm in cmap_bl(min(1, real_val / baseline))[:3]])
+                    cell_color = f"\\cellcolor[rgb]{{{rgb}}}"
                 else:
                     cell_color = ""
 
@@ -143,11 +146,14 @@ def wrapper():
                               '\\textgreater1e16', '\\textgreater1e20'],
                      type=str, required=False, nargs='+',
                      help="How to show the thresholds in string (support LaTex format)")
-    cli.add_argument("-color-maps", required=False, dest="color_maps", nargs=3, type=str,
+    cli.add_argument("--color-maps", required=False, dest="color_maps", nargs=3, type=str,
                      default=["Greens", "Reds", "Purples"],
                      help="Need three color names to color the table. "
                           "Form left to right, the color is used for ``diagonal``, ``bottom left``, ``top right``"
                           " part of the table.")
+    cli.add_argument("--color-upper", required=False, dest="upperbound", type=float,
+                     default=4096,
+                     help="In tables, values larger than ``baseline`` will be equal to ``baseline``.")
     args = cli.parse_args()
 
     gen_table(args.thresholds, args.display,
@@ -155,7 +161,8 @@ def wrapper():
               read_raw_data(args.fd_b, args.skip, args.splitter, args.idx_pwd, args.idx_rank, args.idx_freq),
               color_map_diagonal=get_color_map(args.color_maps[0]),
               color_map_bottom_left=get_color_map(args.color_maps[1]),
-              color_map_top_right=get_color_map(args.color_maps[2]))
+              color_map_top_right=get_color_map(args.color_maps[2]),
+              baseline=args.upperbound)
     pass
 
 
