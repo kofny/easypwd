@@ -10,7 +10,8 @@ try:
     import statsmodels.api as sm
     from scipy.stats import ks_2samp
 except ImportError:
-    print(f"Make sure that you have installed statsmodels and scipy")
+    print(f"Make sure that you have installed statsmodels and scipy:\n"
+          f"\tpip install statsmodels scipy", file=sys.stderr)
     sys.exit(-1)
 
 
