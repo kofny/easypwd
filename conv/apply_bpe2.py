@@ -257,6 +257,8 @@ def create_parser(subparsers=None):
                         help="save data in format of json to plot lines")
     parser.add_argument("--debug", dest="debug", type=argparse.FileType('w'), required=False, default=None,
                         help="save intermediate results into this file")
+    parser.add_argument("--chunks", dest="chunks", type=argparse.FileType('r'), required=True,
+                        help="Counting the rank of the chunks based on this file")
     return parser
 
 
@@ -495,21 +497,24 @@ def wrapper():
         ranges.append((args.ranges[i], args.ranges[i + 1]))
     if not args.input.seekable():
         return
+    """
+    Counting cracked passwords
+    """
     args.input.seek(0)
     cracked = read_cracked(args.input, ranges)
-    vocab = {}
-    with open(args.output.name, 'r') as fin:
-        for line in fin:
-            chunks = [itm for itm in line.strip("\r\n").split(" ")]
-            for a in chunks:
-                if a not in vocab:
-                    vocab[a] = 0
-                vocab[a] += 1
+    """
+    Counting the rank of the chunks
+    """
     vocab_ranks = {}
     _rank = 1
-    for item, _ in sorted(vocab.items(), key=lambda x: x[1], reverse=True):
-        vocab_ranks[item] = _rank
+    for line in args.chunks:
+        line = line.strip("\r\n")
+        chunk, _ = line.split(" ")
+        vocab_ranks[chunk] = _rank
         _rank += 1
+    """
+    Counting the chunks and the ranks of the chunks for each password
+    """
     target = {}
     with open(args.output.name, 'r') as fin:
         for line in fin:
@@ -520,6 +525,9 @@ def wrapper():
             ranks = [vocab_ranks[i] for i in chunks]
             target[pwd] = chunks, ranks
     x_list, y_list = [], []
+    """
+    For each given range, count the average rank of the cracked passwords
+    """
     for r, pwd_cnt in sorted(cracked.items(), key=lambda x: x[0][0]):
         total_sum = 0
         total_cnt = 0
