@@ -28,13 +28,17 @@ python3 lines.py \
 import argparse
 import json
 import os
+
+import pickle
 import sys
 from collections import defaultdict
 from typing import TextIO, List, Any, Dict
 
 import matplotlib.pyplot as plt
+from matplotlib.artist import Artist
 from matplotlib.legend_handler import HandlerTuple
 import matplotlib
+from matplotlib.patches import Patch
 
 matplotlib.rcParams['pdf.fonttype'] = 42
 
@@ -66,6 +70,8 @@ class PlotParams:
         self.xticks_val = args.xticks_val
         self.xticks_text = args.xticks_text
         self.xtick_direction = args.xtick_direction
+
+        self.patches = args.patches
 
         if len(self.xticks_val) != len(self.xticks_text):
             print(f"{self.xticks_val} does not match {self.xticks_text}", file=sys.stderr)
@@ -222,6 +228,15 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     ax = plt.gca()
     for direction in plot_params.no_boarder:
         ax.spines[direction].set_color('none')
+    for patch in plot_params.patches:
+        if isinstance(patch, Artist):
+            print('hh', patch)
+            ax.add_artist(patch)
+        elif isinstance(patch, Patch):
+            print('ww')
+            ax.add_patch(patch)
+        else:
+            print("yy")
     if plot_params.legend_loc != DefaultVal.legend:
         plt.legend([tuple(label_line[k]) for k in label_line.keys()],
                    [label for label in label_line.keys()],
@@ -333,6 +348,24 @@ def main():
     cli.add_argument("--use-acc-freq", required=False, dest="use_acc_freq", action="store_true",
                      help="Use the acc freq of y, e.g., y_1 = 1, total = 10, "
                           "then we display y_1 = 1 instead of 1/10 in the figure")
+
+    def patch_type(v):
+        """
+        read the pickle file and obtain the list of patches
+        :param v: pickle file which contains a list of patches
+        :return: parsed patches
+        """
+        try:
+            with open(v, 'rb') as fin:
+                res = pickle.load(fin)
+                return res
+        except Exception as e:
+            print(e, file=sys.stderr)
+            sys.exit(-1)
+        pass
+
+    cli.add_argument("--patches", required=False, dest="patches", default=[], type=patch_type,
+                     help="Specify the pickle file which contains the list of patches")
     args = cli.parse_args()
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])
     if not suffix_ok:
