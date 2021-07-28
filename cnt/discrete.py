@@ -21,7 +21,7 @@ def discrete(dataset: TextIO):
     del u
     total = sum(d.values())
     avg = sum([k * v for k, v in d.items()]) / total
-    sqr_diff = sum([(k - avg) ** 2 * v for k, v in d.items()]) / total
+    sqr_diff = sum([(k - avg) ** 2 * v for k, v in d.items()]) / (total - 1)
     std_diff = math.sqrt(sqr_diff)
     dis = std_diff / avg
     return dis, uniq
