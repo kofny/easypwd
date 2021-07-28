@@ -47,7 +47,7 @@ def count_test_set(file: TextIO, close_fd: bool = False):
 
 def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
             fd_test: TextIO, key: Callable[[str], Tuple[str, int]],
-            text_xy: Tuple[float, float], text_fontsize: int, show_text: bool,
+            text_xy: Tuple[float, float], text_fontsize: int, show_text: bool, show_label: bool,
             need_sort: bool, marker_size: float, mark_idx: List[int],
             lower_bound: int = 0, upper_bound: int = 10 ** 10,
             color: str = None, line_style: str = '-', line_width: float = 2, marker: str = None,
@@ -67,9 +67,13 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
         cracked_list = config['y_list']
         total = config['total']
     else:
-        test_items = count_test_set(fd_test, True)
-        total = sum(test_items.values())
         pwd_dict = read_dict(fd_dict)
+        if fd_test is None:
+            test_items = defaultdict(lambda: 1)
+            pass
+        else:
+            test_items = count_test_set(fd_test, True)
+        total = sum(test_items.values())
         guesses_list = []
         cracked_list = []
         cracked = 0
@@ -109,10 +113,11 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
 
     if text_x != default_pos and text_y != default_pos:
         show_text = True
-    if text_x == default_pos:
+    if text_x == default_pos and len(guesses_list) > 0:
         text_x = guesses_list[-1]
-    if text_y == default_pos:
-        text_y = cracked_list[-1] / total * 100
+    if text_y == default_pos and len(cracked_list) > 0:
+        if total > 0:
+            text_y = cracked_list[-1] / total * 100
 
     if color is None:
         text_color = "black"
@@ -131,6 +136,7 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
             actual_mark_every.append(actual_idx)
     curve = {
         "label": label,
+        "show_label": show_label,
         "total": total,
         "marker": marker,
         "marker_size": marker_size,
@@ -155,15 +161,18 @@ def main():
     cli = argparse.ArgumentParser("Beautify Guess-Crack result file: json for rank (j4rank)")
     cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
                      help="how to identify this curve")
+    cli.add_argument("--show-label", required=False, dest="show_label", action="store_true",
+                     help="show label in legend.")
     cli.add_argument("-f", "--gc", required=False, dest="fd_gc", type=argparse.FileType("r"),
                      default=None, help="guess crack file to be parsed")
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=str,
                      help="save parsed data here")
     cli.add_argument("-d", "--dict-attack", required=False, dest="fd_dict", type=argparse.FileType('r'),
                      default=None, help="apply dict attack first")
-    cli.add_argument("-t", "--test", required=True, dest="fd_test", type=argparse.FileType('r'),
+    cli.add_argument("-t", "--test", required=False, dest="fd_test", type=argparse.FileType('r'),
                      help="test set, to count number of passwords in test set. "
-                          "Note that you can make one password per line or (passwor, count) per line")
+                          "Note that you can make one password per line or (password, count) per line. "
+                          "If you don't provide this file, each password will only appear once")
     cli.add_argument("--lower", required=False, dest="lower_bound", default=0, type=int,
                      help="guesses less than this will be ignored and will not appear in beautified json file")
     cli.add_argument("--upper", required=False, dest="upper_bound", default=10 ** 18, type=int,
@@ -231,7 +240,7 @@ def main():
             force_update=args.force_update,
             line_style=line_style,
             line_width=args.line_width, key=my_key, text_xy=(args.text_x, args.text_y),
-            text_fontsize=args.text_fontsize, show_text=args.show_text)
+            text_fontsize=args.text_fontsize, show_text=args.show_text, show_label=args.show_label)
 
 
 if __name__ == '__main__':
