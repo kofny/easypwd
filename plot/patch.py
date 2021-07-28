@@ -1,23 +1,26 @@
 import argparse
 import json
-from json import JSONDecodeError
-from typing import Tuple, List, Dict, TextIO
-
 import pickle
+import typing
+from json import JSONDecodeError
 
 import matplotlib.pyplot as plt
 import sys
 from matplotlib.artist import Artist
-from matplotlib.patches import ConnectionStyle, ArrowStyle, ConnectionPatch, Ellipse
-from matplotlib.text import Text
+from matplotlib.patches import ConnectionPatch, Ellipse
+from matplotlib.text import Text, Annotation
 
 arrow_styles = ['-', '<-', '->', '<->', '<|-', '-|>', '<|-|>', ']-[', ']-', '-[', '|-|', 'simple', 'fancy', 'wedge']
 connection_styles = ['arc3', 'angle3', 'angle', 'arc', 'bar']
+coords = ["figure points", "figure pixels", "figure fraction", "subfigure points",
+          "subfigure pixels", "subfigure faction", "axes points", 'axes pixels',
+          'axes fraction',
+          'data', 'polar']
 func_name = "from_argv"
-save_name = "save"
+save_name = "--save"
 
 
-def get_sub_classes(base: type, attr_name='name') -> Dict[str, type]:
+def get_sub_classes(base: type, attr_name='name') -> typing.Dict[str, type]:
     d = {}
     assert hasattr(base, attr_name)
     for sub_cls in base.__subclasses__():
@@ -42,15 +45,50 @@ class Base:
     name = "base"
 
     @staticmethod
-    def from_argv(argv: List[str]) -> Tuple[Dict, Artist]:
+    def from_argv(argv: typing.List[str]) -> typing.Tuple[typing.Dict, Artist]:
         raise NotImplementedError
+
+
+class AugAnnotation(Base):
+    name = "annotation"
+
+    @staticmethod
+    def from_argv(argv: typing.List[str]):
+        cli = argparse.ArgumentParser(f"Checking {AugConn.name} configuration")
+        cli.add_argument("--text", dest="text", type=str, required=True, help="the text of the annotation")
+        cli.add_argument("--xy", dest="xy", type=float, required=True, nargs=2,
+                         help="the (x, y) point to annotate based on xy-coords")
+        cli.add_argument("--xy-text", dest="xy_text", type=float, required=False, nargs=2, default=None,
+                         help="The position (x, y) to place the text at based on text-coords")
+        cli.add_argument("--xy-coords", dest="xy_coords", type=str, required=False, default="data",
+                         choices=coords)
+        cli.add_argument("--text-coords", dest="text_coords", type=str, required=False, default="data",
+                         choices=[*coords, 'offset points', 'offset pixels'])
+        cli.add_argument("--arrow-props", dest="arrow_props", nargs="+", type=str, required=False,
+                         help="Specify the `width`, `headwidth`, etc. of the arrow if your are the expert of the "
+                              "Matplotlib. Or you can look up the manual. "
+                              "One example is --arrow-props width=1 headwidth=2")
+        cli.add_argument("--expert", dest="expert", type=str, nargs='+', required=False, default=[],
+                         help="If you are an expert of Matplotlib, you may set additional configurations here.\n"
+                              "E.g., --expert color=red facecolor=blue")
+        if not argv:
+            cli.print_help()
+            return {}, None
+        got_args = cli.parse_args(argv)
+        expert_opts = parse_expert(got_args.expert)
+        arrow_props = parse_expert(got_args.arrow_props)
+        conf = dict(text=got_args.text, xy=got_args.xy, xytext=got_args.xy_text or got_args.xy,
+                    xycoords=got_args.xy_coords, textcoords=got_args.text_coords,
+                    arrowprops=arrow_props, **expert_opts)
+        art = Annotation(**conf)
+        return conf, art
 
 
 class AugText(Base):
     name = "text"
 
     @staticmethod
-    def from_argv(argv: List[str]):
+    def from_argv(argv: typing.List[str]):
         cli = argparse.ArgumentParser(f"Checking {AugText.name} configuration")
 
         cli.add_argument("-x", "--x-coord", dest="x", type=float, required=True, help="x of the annotation text")
@@ -61,7 +99,7 @@ class AugText(Base):
                               "E.g., --expert color=red facecolor=blue")
         if not argv:
             cli.print_help()
-            return {}
+            return {}, None
         got_args = cli.parse_args(argv)
         expert_opts = parse_expert(got_args.expert)
         conf = dict(x=got_args.x, y=got_args.y, text=got_args.text, **expert_opts)
@@ -73,7 +111,7 @@ class AugConn(Base):
     name = "connection"
 
     @staticmethod
-    def from_argv(argv: List[str]):
+    def from_argv(argv: typing.List[str]):
         cli = argparse.ArgumentParser(f"Checking {AugConn.name} configuration")
 
         cli.add_argument("-a", "--a-xy", dest="a", type=float, nargs=2, required=True,
@@ -92,7 +130,7 @@ class AugConn(Base):
                               "E.g., --expert color=red facecolor=blue")
         if not argv:
             cli.print_help()
-            return {}
+            return {}, None
         got_args = cli.parse_args(argv)
         expert_opts = parse_expert(got_args.expert)
         conf = dict(xyA=got_args.a, xyB=got_args.b, coordsA="data", coordsB="data", arrowstyle=got_args.arrow_style,
@@ -105,13 +143,13 @@ class AugConn(Base):
 class AugEllipse(Base):
     name = "ellipse"
 
-    def __init__(self, b: Tuple[float, float], width: float, height: float, angle=float, **kwargs):
+    def __init__(self, b: typing.Tuple[float, float], width: float, height: float, angle=float, **kwargs):
         super(AugEllipse, self).__init__()
         self.__conf = dict(xy=b, width=width, height=height, angle=angle, **kwargs)
         pass
 
     @staticmethod
-    def from_argv(argv: List[str]):
+    def from_argv(argv: typing.List[str]):
         cli = argparse.ArgumentParser(f"Checking {AugEllipse.name} configuration")
 
         cli.add_argument("-x", "--x-coord", dest="x", type=float, required=True, help="x of the center of the ellipse")
@@ -124,7 +162,7 @@ class AugEllipse(Base):
                               "E.g., --expert color=red facecolor=blue")
         if not argv:
             cli.print_help()
-            return {}
+            return {}, None
         got_args = cli.parse_args(argv)
         expert_opts = parse_expert(got_args.expert)
         print(got_args.expert)
@@ -139,7 +177,7 @@ class AugEllipse(Base):
         return conf, art
 
 
-def parse_expert(expert_opts: List[str]):
+def parse_expert(expert_opts: typing.List[str]):
     parsed = dict()
     for item in expert_opts:  # type: str
         idx_eq = item.find('=')
@@ -170,13 +208,13 @@ def parse_expert(expert_opts: List[str]):
     pass
 
 
-def print_help(names: Dict[str, type], argv: List[str]):
+def print_help(names: typing.Dict[str, type], argv: typing.List[str]):
     print("Users should specify the following commands:")
     for name, cls in names.items():
         print(f"\t{name}")
     print("You can specify each command ``SEVERAL TIMES``.")
     print("Saving the results in files by specifying the following command:\n"
-          "\tsave /path/to/save/your/results.txt\n"
+          "\t--save /path/to/save/your/results.txt\n"
           "Otherwise, print the results to stdout.")
     for v in argv:
         if v in names:
@@ -188,7 +226,7 @@ def print_help(names: Dict[str, type], argv: List[str]):
                 print(f"This command is invalid because we fail to find callable ``{func_name}`` function in the code")
 
 
-def check_help(argv: List[str], names: Dict[str, type]):
+def check_help(argv: typing.List[str], names: typing.Dict[str, type]):
     h = {"-h", "--help", "--h", "-help"}
     for v in argv:
         if v in h:
@@ -196,12 +234,12 @@ def check_help(argv: List[str], names: Dict[str, type]):
             sys.exit(0)
 
 
-def get_save_path(argv: List[str]):
+def get_save_path(argv: typing.List[str]):
     n_argv = argv
     fb_out = sys.stdout
     found = -1
     for idx, v in enumerate(argv):
-        if v == 'save':
+        if v == save_name:
             filename = argv[idx + 1]
             if not filename.endswith(".pickle"):
                 filename += ".pickle"
@@ -214,7 +252,8 @@ def get_save_path(argv: List[str]):
     return n_argv, fb_out
 
 
-def get_argv(names: Dict[str, type]) -> Tuple[Dict[str, List[List[str]]], TextIO]:
+def get_argv(names: typing.Dict[str, type]) -> \
+        typing.Tuple[typing.Dict[str, typing.List[typing.List[str]]], typing.TextIO]:
     argv = sys.argv
     argv, fb_out = get_save_path(argv)
     check_help(argv=argv, names=names)
@@ -245,6 +284,11 @@ def wrapper():
             sys.exit(f"Fail to find `{func_name}` function in {name}")
         for cmd in commands:
             conf, art = func(cmd)
+            if art is None:
+                print(f"Invalid command found for {name}:\n"
+                      f"Details of the command: `{' '.join(cmd)}`")
+                sys.exit(4)
+                pass
             configurations.append(conf)
             arts.append(art)
         pass
