@@ -141,9 +141,9 @@ class LineParam:
         y_list = data["y_list"]
         if use_rate:
             if not data.get("total"):
-                print(f"the given file ``{json_file.name}`` contains no field of ``total``, "
+                print(f"[WARNING] The given file ``{json_file.name}`` contains no field of ``total`` or ``total = 0``, "
                       f"which is required when ``use-rate`` is true.\n"
-                      f"Therefore, use-rate becomes ``false`` by default", file=sys.stderr)
+                      f"Therefore, use-rate becomes ``false`` automatically", file=sys.stderr)
             else:
                 total = data["total"]
                 y_list = [cracked / total * 100 for cracked in y_list]
