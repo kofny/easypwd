@@ -4,11 +4,16 @@ import pickle
 import typing
 from json import JSONDecodeError
 
-import matplotlib.pyplot as plt
 import sys
-from matplotlib.artist import Artist
-from matplotlib.patches import ConnectionPatch, Ellipse
-from matplotlib.text import Text, Annotation
+
+try:
+    from matplotlib.artist import Artist
+    from matplotlib.patches import ConnectionPatch, Ellipse
+    from matplotlib.text import Text, Annotation
+except ImportError:
+    print("Error when importing matplotlib. Please install it and then run the code again!\n"
+          "\t/path/to/your/python -m pip install matplotlib")
+    sys.exit(5)
 
 arrow_styles = ['-', '<-', '->', '<->', '<|-', '-|>', '<|-|>', ']-[', ']-', '-[', '|-|', 'simple', 'fancy', 'wedge']
 connection_styles = ['arc3', 'angle3', 'angle', 'arc', 'bar']
@@ -165,20 +170,18 @@ class AugEllipse(Base):
             return {}, None
         got_args = cli.parse_args(argv)
         expert_opts = parse_expert(got_args.expert)
-        print(got_args.expert)
-        print(expert_opts)
 
         conf = dict(xy=(got_args.x, got_args.y), width=got_args.width, height=got_args.height, angle=got_args.angle,
                     **expert_opts)
-        print(conf)
         art = Ellipse(xy=(5.6, 0.0), width=8.0, height=.5, angle=16.0,
                       facecolor=[0.1, 0.2, 0.3, 0.4])
-        print(art)
         return conf, art
 
 
 def parse_expert(expert_opts: typing.List[str]):
     parsed = dict()
+    if expert_opts is None:
+        return parsed
     for item in expert_opts:  # type: str
         idx_eq = item.find('=')
         if idx_eq == -1:
@@ -257,16 +260,13 @@ def get_argv(names: typing.Dict[str, type]) -> \
     argv = sys.argv
     argv, fb_out = get_save_path(argv)
     check_help(argv=argv, names=names)
-    indices = {k: -1 for k in names}  # {"text": -1, "connection": -1, "ellipse": -1}
+    indices_dict = []  # {"text": -1, "connection": -1, "ellipse": -1}
     for i, v in enumerate(argv):
-        if v in indices:
-            indices[v] = i
+        if v in names:
+            indices_dict.append((v, i))
     end = len(argv)
     argv_dict = {k: [] for k in names}  # {"text": [], "connection": [], "ellipse": []}
-    for name, idx in sorted(indices.items(), key=lambda x: x[1], reverse=True):
-        if idx == -1:
-            print(f"[WARNING] We fail to find `{name}`", file=sys.stderr)
-            continue
+    for name, idx in sorted(indices_dict, key=lambda x: x[1], reverse=True):
         argv4cmd = argv[idx + 1: end]
         argv_dict[name].append(argv4cmd)
         end = idx
