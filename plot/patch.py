@@ -294,23 +294,8 @@ def wrapper():
         pass
     pickle.dump(arts, fb_save)
     print(f"[DEBUG]: {json.dumps(configurations)}", file=sys.stderr)
-    fig = plt.figure()
-    plt.xscale('log')
-    ax = plt.gca()
-    for art in arts:
-        ax.add_artist(art)
-    plt.show()
-    plt.close(fig)
     pass
 
 
 if __name__ == '__main__':
-    # sys.argv.append('-h')
     wrapper()
-    # names = get_sub_classes(Base)
-    # print(names)
-    # print(names['text'](t_x=0, t_y=0, text="").get_conf())
-    # print(AugText(t_x=0, t_y=0, text=""))
-    #
-    # print(type(Base))
-    pass
