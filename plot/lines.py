@@ -230,13 +230,9 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         ax.spines[direction].set_color('none')
     for patch in plot_params.patches:
         if isinstance(patch, Artist):
-            print('hh', patch)
             ax.add_artist(patch)
         elif isinstance(patch, Patch):
-            print('ww')
             ax.add_patch(patch)
-        else:
-            print("yy")
     if plot_params.legend_loc != DefaultVal.legend:
         plt.legend([tuple(label_line[k]) for k in label_line.keys()],
                    [label for label in label_line.keys()],
