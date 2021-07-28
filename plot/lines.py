@@ -172,6 +172,7 @@ class LineParam:
         self.text_y = data.get('text_y') or -1
         self.text_fontsize = data.get('text_fontsize') or 12
         self.text_color = data.get('text_color') or "black"
+        self.show_label = data.get('show_label') or False
 
 
 def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = True):
@@ -187,7 +188,8 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         if plot_params.show_text and line_params.show_text:
             plt.text(x=line_params.text_x, y=line_params.text_y, s=line_params.label,
                      c=line_params.text_color, fontsize=line_params.text_fontsize)
-        label_line[line_params.label].append(line)
+        if line_params.show_label:
+            label_line[line_params.label].append(line)
         del line_params
     plt.xscale(plot_params.xscale)
     plt.yscale(plot_params.yscale)
