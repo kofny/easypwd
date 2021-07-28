@@ -35,7 +35,7 @@ def wrapper():
     for dataset in args.files:
         dis, uniq = discrete(dataset=dataset)
         print(f"File: {dataset.name}\n"
-              f"\tDiscrete Degree: {dis:8.4f}, Unique entries: {uniq}")
+              f"\tDiscrete Degree: {dis:8.4f}, Unique entries: {uniq:,}")
         dataset.close()
     pass
 
