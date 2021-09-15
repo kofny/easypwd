@@ -55,7 +55,7 @@ int read_targets(std::ifstream &tar, TargetsCount &targetsCount) {
     return 0;
 }
 
-int plain_cmp(std::ifstream &guesses_file, std::ofstream &f_out, std::ifstream &tar_pwd_list,
+int plain_cmp(std::istream &fd, std::ofstream &f_out, std::ifstream &tar_pwd_list,
               std::string &splitter, char delimiter, bool with_prob, bool forget) {
     std::string line;
     TargetsCount targetsCount;
@@ -67,7 +67,6 @@ int plain_cmp(std::ifstream &guesses_file, std::ofstream &f_out, std::ifstream &
     unsigned long long guesses = 0;
     unsigned long long cracked = 0;
     unsigned long long cur = 0;
-    std::istream &fd = (guesses_file.is_open()) ? guesses_file : std::cin;
     while (getline(fd, line)) {
         if (cur % 1000000 == 0) {
             tqdm::tqdm(cur);
@@ -81,7 +80,7 @@ int plain_cmp(std::ifstream &guesses_file, std::ofstream &f_out, std::ifstream &
             split(line, tokens, delimiter);
             if (tokens.size() != 2) {
                 fprintf(stderr, "%s is not the format of (pwd   log_prob)\n", line.c_str());
-                std::exit(-1);
+                std::exit(-8);
             }
             pwd = tokens[0];
             log_prob = tokens[1];
@@ -126,7 +125,7 @@ int main(int argc, char *argv[]) {
                      guesses_file.open(f, std::ios::in);
                      if (!guesses_file.is_open()) {
                          perror("cannot reading input from file...\n");
-                         std::exit(-1);
+                         std::exit(-6);
                      }
                  })),
             (clipp::required("-o", "--output") &
@@ -134,14 +133,14 @@ int main(int argc, char *argv[]) {
                  f_out.open(f, std::ios::out);
                  if (!f_out.is_open()) {
                      std::cerr << "cannot open output file " << f << std::endl;
-                     std::exit(-1);
+                     std::exit(-5);
                  }
              })),
             (clipp::required("-t", "--target") & clipp::value("target").call([&](const std::string &f) {
                 tar_pwd_list.open(f, std::ios::in);
                 if (!tar_pwd_list.is_open()) {
                     std::cerr << "Failed to open " << f << std::endl;
-                    std::exit(-1);
+                    std::exit(-4);
                 }
             })),
             (clipp::option("-s", "--split4output") & clipp::value("guesses: cracked", splitter)),
@@ -156,32 +155,19 @@ int main(int argc, char *argv[]) {
                   << std::endl;
     }
     if (clipp::parse(argc, argv, cli)) {
-        std::string line;
-        getline(guesses_file, line);
-        guesses_file.seekg(0, std::ios::beg);
+        std::istream &fd = guesses_file.is_open() ? guesses_file : std::cin;
         if (with_prob) {
-            std::cout << "Mode: pwd & prob\n"
-                      << "Delimiter: \"" << delimiter << "\"" << std::endl;
-            if (line.find(delimiter) == std::string::npos) {
-                std::cerr << "Cannot find \"" << delimiter
-                          << "\", your line should in format of (pwd    prob),"
-                             " re-check please!" << std::endl;
-                std::exit(-1);
-            }
+            std::cerr << "Mode: pwd & prob\n" << "Delimiter: \"" << delimiter << "\"" << std::endl;
         } else {
-            if (line.find(delimiter) != std::string::npos) {
-                std::cerr << "WARNING: guesses file contains \"" << delimiter
-                          << R"(", however, you are in "pwd only" mode)" << std::endl;
-            }
-            std::cout << "Mode: pwd only\n";
+            std::cerr << "Mode: pwd only\n";
         }
-        std::cout << "Splitter: \"" << splitter << "\"" << std::endl;
-        plain_cmp(guesses_file, f_out, tar_pwd_list, splitter, delimiter, with_prob, forget);
+        std::cerr << "Splitter: \"" << splitter << "\"" << std::endl;
+        plain_cmp(fd, f_out, tar_pwd_list, splitter, delimiter, with_prob, forget);
         guesses_file.close();
         f_out.flush();
         f_out.close();
         tar_pwd_list.close();
-        std::cout << "Done!" << std::endl;
+        std::cerr << "Done!" << std::endl;
     } else {
         std::cerr << clipp::usage_lines(cli, "Target Stat") << std::endl;
         return 1;
