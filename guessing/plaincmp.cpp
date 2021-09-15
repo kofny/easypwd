@@ -61,13 +61,14 @@ int plain_cmp(std::ifstream &guesses_file, std::ofstream &f_out, std::ifstream &
     TargetsCount targetsCount;
     read_targets(tar_pwd_list, targetsCount);
     int total_targets = 0;
-    for (auto &iter : targetsCount) {
+    for (auto &iter: targetsCount) {
         total_targets += iter.second;
     }
     unsigned long long guesses = 0;
     unsigned long long cracked = 0;
     unsigned long long cur = 0;
-    while (getline(guesses_file, line)) {
+    std::istream &fd = (guesses_file.is_open()) ? guesses_file : std::cin;
+    while (getline(fd, line)) {
         if (cur % 1000000 == 0) {
             tqdm::tqdm(cur);
         }
@@ -121,6 +122,7 @@ int main(int argc, char *argv[]) {
     bool forget = false;
     auto cli = ((clipp::required("-i", "--guesses") &
                  clipp::value("input, pair of (pwd, log_prob)").call([&](const std::string &f) {
+                     if (f == "stdin") return;
                      guesses_file.open(f, std::ios::in);
                      if (!guesses_file.is_open()) {
                          perror("cannot reading input from file...\n");
