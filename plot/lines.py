@@ -39,8 +39,14 @@ from matplotlib.artist import Artist
 from matplotlib.legend_handler import HandlerTuple
 import matplotlib
 from matplotlib.patches import Patch
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 matplotlib.rcParams['pdf.fonttype'] = 42
+
+
+def conf_font(font_name):
+    plt.rcParams['font.sans-serif'] = [font_name]
+    plt.rcParams['axes.unicode_minus'] = False
 
 
 class DefaultVal:
@@ -49,6 +55,35 @@ class DefaultVal:
     empty_ticks = []
     legend = "none"
     legend_fontsize = 12
+
+
+class SubParams:
+    def __init__(self, args: Any):
+        self.use_inset_axes = args.inset_axes is not None
+        if not isinstance(args.subfig_xticks, list) or \
+                not isinstance(args.subfig_xticklabels, list) or \
+                len(args.subfig_xticks) != len(args.subfig_xticklabels):
+            print(f"Make sure that --subfig-xticks has the same number of elements with --subfig-xticklabels",
+                  file=sys.stderr)
+            sys.exit(1)
+        if not isinstance(args.subfig_yticks, list) or \
+                not isinstance(args.subfig_yticklabels, list) or \
+                len(args.subfig_yticks) != len(args.subfig_yticklabels):
+            print(f"Make sure that --subfig-yticks has the same number of elements with --subfig-yticklabels",
+                  file=sys.stderr)
+            sys.exit(1)
+        self.inset_axes = args.inset_axes
+        self.xmin = args.subfig_xmin
+        self.xmax = args.subfig_xmax
+        self.ymin = args.subfig_ymin
+        self.ymax = args.subfig_ymax
+        self.xticks = args.subfig_xticks
+        self.yticks = args.subfig_yticks
+        self.xticklabels = args.subfig_xticklabels
+        self.yticklabels = args.subfig_yticklabels
+        self.tickfontsize = args.subfig_tickfontsize
+        self.mark_inset = args.mark_inset or (2, 4)
+        pass
 
 
 class PlotParams:
@@ -127,6 +162,7 @@ class PlotParams:
         if os.path.isdir(self.save):
             print(f"{self.save} is a directory, use a file please", file=sys.stderr)
             sys.exit(-1)
+        self.sub_params = SubParams(args)
 
 
 class LineParam:
@@ -179,12 +215,22 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     fig = plt.figure(figsize=plot_params.fig_size)
     fig.set_tight_layout(plot_params.tight_layout)
     label_line = defaultdict(list)
+    ax = plt.gca()
+    inner = None
+    if plot_params.sub_params.use_inset_axes:
+        inner = ax.inset_axes(plot_params.sub_params.inset_axes)
+        pass
     for json_file in json_files:
         line_params = LineParam(json_file=json_file, close_fd=close_fd, use_rate=plot_params.use_rate)
         line, = plt.plot(line_params.x_list, line_params.y_list, color=line_params.color,
                          marker=line_params.marker, markersize=line_params.marker_size,
                          markevery=line_params.mark_every, linewidth=line_params.line_width,
                          linestyle=line_params.line_style, label=line_params.label)
+        if inner is not None:
+            inner.plot(line_params.x_list, line_params.y_list, color=line_params.color,
+                       marker=line_params.marker, markersize=line_params.marker_size,
+                       markevery=line_params.mark_every, linewidth=line_params.line_width,
+                       linestyle=line_params.line_style, label=line_params.label)
         if plot_params.show_text and line_params.show_text:
             plt.text(x=line_params.text_x, y=line_params.text_y, s=line_params.label,
                      c=line_params.text_color, fontsize=line_params.text_fontsize)
@@ -227,7 +273,6 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
     if plot_params.show_grid:
         plt.grid(b=True, ls=plot_params.grid_linestyle)
     # hide which boarder
-    ax = plt.gca()
     for direction in plot_params.no_boarder:
         ax.spines[direction].set_color('none')
     for patch in plot_params.patches:
@@ -235,13 +280,29 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
             ax.add_artist(patch)
         elif isinstance(patch, Patch):
             ax.add_patch(patch)
+    if inner is not None:
+        sub_params = plot_params.sub_params
+        inner.set_xscale(plot_params.xscale)
+        inner.set_yscale(plot_params.yscale)
+        inner.set_xlim(xmin=sub_params.xmin or plot_params.xlim_low, xmax=sub_params.xmax or plot_params.xlim_high)
+        inner.set_ylim(ymin=sub_params.ymin or plot_params.ylim_low, ymax=sub_params.ymax or plot_params.ylim_high)
+        inner.set_xticks(sub_params.xticks or plot_params.xticks_val)
+        inner.set_yticks(sub_params.yticks or plot_params.yticks_val)
+        inner.set_xticklabels(sub_params.xticklabels,
+                              fontdict={'size': sub_params.tickfontsize or plot_params.tick_size})
+        inner.set_yticklabels(sub_params.yticklabels,
+                              fontdict={'size': sub_params.tickfontsize or plot_params.tick_size})
+        inner.tick_params(axis='both', which='minor', length=0)
+        mark_inset(ax, inner, loc1=sub_params.mark_inset[0], loc2=sub_params.mark_inset[1])
+        pass
+
     if plot_params.legend_loc != DefaultVal.legend:
-        plt.legend([tuple(label_line[k]) for k in label_line.keys()],
-                   [label for label in label_line.keys()],
-                   handlelength=plot_params.legend_handle_length,
-                   loc=plot_params.legend_loc,
-                   fontsize=plot_params.legend_fontsize,
-                   handler_map={tuple: HandlerTuple(ndivide=1)}, frameon=plot_params.legend_frameon)
+        ax.legend([tuple(label_line[k]) for k in label_line.keys()],
+                  [label for label in label_line.keys()],
+                  handlelength=plot_params.legend_handle_length,
+                  loc=plot_params.legend_loc,
+                  fontsize=plot_params.legend_fontsize,
+                  handler_map={tuple: HandlerTuple(ndivide=1)}, frameon=plot_params.legend_frameon)
     plt.savefig(plot_params.save)
     plt.close(fig)
     pass
@@ -255,7 +316,7 @@ def main():
         "dot": ":"
     }
     cli = argparse.ArgumentParser("Curver: An Easy Guess-Crack Curve Drawer")
-    valid_suffix = [".pdf", ".png"]
+    valid_suffix = [".pdf", ".png", '.svg']
     cli.add_argument("-f", "--files", required=True, dest="json_files", nargs="+", type=argparse.FileType("r"),
                      help="json files generated by gcutify")
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=str,
@@ -346,6 +407,31 @@ def main():
     cli.add_argument("--use-acc-freq", required=False, dest="use_acc_freq", action="store_true",
                      help="Use the acc freq of y, e.g., y_1 = 1, total = 10, "
                           "then we display y_1 = 1 instead of 1/10 in the figure")
+    cli.add_argument("--font", required=False, dest="global_font", default=None, type=str,
+                     help="set the font, could be Chinese font")
+    cli.add_argument("--inset-axes", required=False, dest='inset_axes', default=None, nargs=4, type=float,
+                     help="(x y w h), (x, y) represents the position of the bottom left corner, "
+                          "(w, h) represents the width and the height of the subfig")
+    cli.add_argument("--subfig-xmin", required=False, dest="subfig_xmin", type=float,
+                     help="the minimum x to show in the subfig")
+    cli.add_argument("--subfig-xmax", required=False, dest="subfig_xmax", type=float,
+                     help="the maximum x to show in the subfig")
+    cli.add_argument("--subfig-ymin", required=False, dest="subfig_ymin", type=float,
+                     help="the minimum y to show in the subfig")
+    cli.add_argument("--subfig-ymax", required=False, dest="subfig_ymax", type=float,
+                     help="the maximum y to show in the subfig")
+    cli.add_argument("--subfig-xticks", required=False, dest="subfig_xticks", type=float, nargs='+',
+                     help="x ticks for subfig")
+    cli.add_argument("--subfig-xticklabels", required=False, dest="subfig_xticklabels", type=str, nargs='+',
+                     help="x tick labels for subfig")
+    cli.add_argument("--subfig-yticks", required=False, dest="subfig_yticks", type=float, nargs='+',
+                     help="y ticks for subfig")
+    cli.add_argument("--subfig-yticklabels", required=False, dest="subfig_yticklabels", type=str, nargs='+',
+                     help="y tick labels for subfig")
+    cli.add_argument("--subfig-tick-size", required=False, dest="subfig_tickfontsize", type=int,
+                     help="fontsize of the ticks")
+    cli.add_argument("--mark-inset", required=False, nargs=2, type=int, choices=[1, 2, 3, 4],
+                     help="mark inset for subfig")
 
     def patch_type(v):
         """
@@ -365,6 +451,8 @@ def main():
     cli.add_argument("--patches", required=False, dest="patches", default=[], type=patch_type,
                      help="Specify the pickle file which contains the list of patches")
     args = cli.parse_args()
+    if args.global_font is not None:
+        conf_font(args.global_font)
     suffix_ok = any([args.fd_save.endswith(suffix) for suffix in valid_suffix])
     if not suffix_ok:
         args.fd_save += args.suffix
