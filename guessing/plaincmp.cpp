@@ -75,15 +75,15 @@ int plain_cmp(std::istream &fd, std::ofstream &f_out, std::ifstream &tar_pwd_lis
         line = rm_nl(line);
         std::string pwd = line;
         std::string log_prob;
+        auto tokens = std::vector<std::string>();
         if (with_prob) {
-            auto tokens = std::vector<std::string>();
             split(line, tokens, delimiter);
             if (tokens.size() != 2) {
                 fprintf(stderr, "%s is not the format of (pwd   log_prob)\n", line.c_str());
-                std::exit(-8);
+                return -8;
             }
-            pwd = tokens[0];
-            log_prob = tokens[1];
+            pwd = tokens.at(0);
+            log_prob = tokens.at(1);
         }
         guesses++;
         if (targetsCount.find(pwd) == targetsCount.end()) { continue; }
@@ -162,7 +162,11 @@ int main(int argc, char *argv[]) {
             std::cerr << "Mode: pwd only\n";
         }
         std::cerr << "Splitter: \"" << splitter << "\"" << std::endl;
-        plain_cmp(fd, f_out, tar_pwd_list, splitter, delimiter, with_prob, forget);
+        int ret_code = plain_cmp(fd, f_out, tar_pwd_list, splitter, delimiter, with_prob, forget);
+        if (ret_code != 0) {
+            std::cerr << std::endl;
+            return ret_code;
+        }
         guesses_file.close();
         f_out.flush();
         f_out.close();
@@ -170,6 +174,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "Done!" << std::endl;
     } else {
         std::cerr << clipp::usage_lines(cli, "Target Stat") << std::endl;
+        std::cerr << "Using `-i stdin` to read input from stdin" << std::endl;
         return 1;
     }
     return 0;
