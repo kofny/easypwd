@@ -3,6 +3,7 @@ We will mask some characters/chunks in passwords
 """
 import argparse
 import bisect
+import os.path
 import random
 from typing import Callable, List, Dict, Set
 from collections import defaultdict
@@ -88,7 +89,6 @@ def save_templates(templates_dict: Dict[str, Set], save: str):
     n_dict = {}
     for cls_name, templates in templates_dict.items():
         n_dict[cls_name] = templates
-        print(f"{cls_name} has {len(templates)} items")
     with open(save, 'wb') as f_save:
         pickle.dump(n_dict, f_save)
     pass
@@ -97,7 +97,8 @@ def save_templates(templates_dict: Dict[str, Set], save: str):
 def wrapper():
     cli = argparse.ArgumentParser("Masking passwords")
     cli.add_argument("-i", "--input", dest="input", type=str, required=True, help='Passwords to parse')
-    cli.add_argument('-o', '--output', dest='output', type=str, required=True, help="Save sampled templates")
+    cli.add_argument('-o', '--output', dest='output', type=str, required=False, default='',
+                     help="Save sampled templates")
     cli.add_argument("--splitter", dest="splitter", type=str, required=False,
                      default='empty', help='split the password according to the splitter. '
                                            'Note that empty = ``, space = ` `, tab = `\\t`')
@@ -112,10 +113,15 @@ def wrapper():
     cli.add_argument("-m", "--mask", dest="mask", type=str, required=False, default="\t",
                      help='the mask to replace the origin characters in passwords')
     args = cli.parse_args()
-    pwd_file, splitter, p, (min_masked, min_visible), length_upper_bound, num_samples = \
+    pwd_file, splitter, p, (min_visible, min_masked), length_upper_bound, num_samples = \
         args.input, args.splitter.lower(), args.prob, args.constrains, args.length_bound, args.num_samples
     output, mask = args.output, args.mask
     length_lower_bound = min_masked + min_visible
+
+    if not os.path.exists(output):
+        print(f"\033[1;31;40m"
+              f"Note that the output does not exist. Therefore we'll not save the results."
+              f"\033[0m", file=sys.stderr)
     if splitter == 'empty':
         def line_splits(line: str):
             return list(line)
@@ -140,7 +146,7 @@ def wrapper():
         ('super-rare', [1, 5]),
         ('rare', [10, 15]),
         ('uncommon', [50, 150]),
-        ('common', [1000, 1500])
+        ('common', [1000, 15000])
     ]
     templates_dict = defaultdict(set)
     for masked_pwd, pwd_set in pwd_mask_dict.items():
@@ -149,7 +155,10 @@ def wrapper():
                 templates_dict[cls_name].add(masked_pwd)
                 break
         pass
-    save_templates(templates_dict, save=output)
+    for cls_name, templates in templates_dict.items():
+        print(f"{cls_name}: {len(templates)}")
+    if os.path.exists(output):
+        save_templates(templates_dict, save=output)
     pass
 
 
