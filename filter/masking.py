@@ -3,19 +3,19 @@ We will mask some characters/chunks in passwords
 """
 import argparse
 import bisect
+import math
 import os.path
+import pickle
 import random
-from typing import Callable, List, Dict, Set
+import sys
 from collections import defaultdict
 from functools import reduce
-
-import math
-import pickle
-
-import sys
+from typing import Callable, List, Dict, Set, Tuple
 
 
-def read_passwords(password_file: str, line_splits: Callable[[str], List[str]], is_valid: Callable[[str], bool]):
+# @profile
+def read_passwords(password_file: str, line_splits: Callable[[str], List[str]], is_valid: Callable[[str], bool]) \
+        -> Dict[int, List[List[str]]]:
     """
 
     :param password_file: file containing passwords per line
@@ -37,10 +37,11 @@ def read_passwords(password_file: str, line_splits: Callable[[str], List[str]], 
             pass
         pass
     print(f"total passwords: {total_pwd}, valid passwords: {valid_pwd}", file=sys.stderr)
+    passwords_per_len = defaultdict(list)
     for line, _ in line_dict.items():
         pwd = line_splits(line)
-        yield pwd
-    pass
+        passwords_per_len[len(pwd)].append(pwd)
+    return passwords_per_len
 
 
 def comb(n, m):
@@ -51,38 +52,42 @@ def comb(n, m):
     return prod // d
 
 
-def masking(pwd: List[str], p: float, min_visible: int, min_masked: int,
-            num_masked_prob_cache: Dict[int, List[float]], mask='\t'):
-    n = len(pwd)
-    max_masked = n - min_visible
-    if max_masked < min_masked:
-        raise Exception(f"The password should have at least {min_visible + min_masked} items, "
-                        f"but {len(pwd)}: {pwd}")
-        pass
-    if n not in num_masked_prob_cache:
-        prob_list = []
-        total = 0
-        for m in range(min_masked, max_masked + 1):
-            c = comb(n, m)
-            total += c * math.pow(p, m) * math.pow(1 - p, n - m)
-            prob_list.append(total)
-        prob_list = [prob / total for prob in prob_list]
-        num_masked_prob_cache[n] = prob_list
-        pass
-    prob_cum_list = num_masked_prob_cache[n]
-    rand_float = random.random()
-    idx = bisect.bisect_right(prob_cum_list, rand_float)
-    m = min_masked + idx
-    is_masks = [True] * m + [False] * (n - m)
-    random.shuffle(is_masks)
-    masked_pwd = []
-    for item, is_mask in zip(pwd, is_masks):
-        if is_mask:
-            masked_pwd.append(mask)
-        else:
-            masked_pwd.append(item)
-        pass
-    return masked_pwd
+# @profile
+def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: int,
+            num_masked_prob_cache: Dict[int, List[float]], mask='\t', dupe_factor: int = 1) \
+        -> Dict[Tuple, Set[Tuple]]:
+    pwd_mask_dict = {}
+    for pwd in passwords:
+        n = len(pwd)
+        max_masked = n - min_visible
+        if max_masked < min_masked:
+            raise Exception(f"The password should have at least {min_visible + min_masked} items, "
+                            f"but {len(pwd)}: {pwd}")
+            pass
+        if n not in num_masked_prob_cache:
+            prob_list = []
+            total = 0
+            for m in range(min_masked, max_masked + 1):
+                c = comb(n, m)
+                total += c * math.pow(p, m) * math.pow(1 - p, n - m)
+                prob_list.append(total)
+            prob_list = [prob / total for prob in prob_list]
+            num_masked_prob_cache[n] = prob_list
+            pass
+        dupe = dupe_factor
+        for _ in range(dupe):
+            idx = bisect.bisect_right(num_masked_prob_cache[n], random.random())
+            m = min_masked + idx
+            is_masks = [True] * m + [False] * (n - m)
+            random.shuffle(is_masks)
+            masked_pwd = tuple(mask if is_mask else item for item, is_mask in zip(pwd, is_masks))
+            # print(masked_pwd)
+            if masked_pwd not in pwd_mask_dict:
+                pwd_mask_dict[masked_pwd] = set()
+            pwd_mask_dict[masked_pwd].add(tuple(pwd))
+            pass
+
+    return pwd_mask_dict
 
 
 def save_templates(templates_dict: Dict[str, Set], save: str):
@@ -94,10 +99,11 @@ def save_templates(templates_dict: Dict[str, Set], save: str):
     pass
 
 
+# @profile
 def wrapper():
     cli = argparse.ArgumentParser("Masking passwords")
     cli.add_argument("-i", "--input", dest="input", type=str, required=True, help='Passwords to parse')
-    cli.add_argument('-o', '--output', dest='output', type=str, required=False, default='',
+    cli.add_argument('-o', '--output-folder', dest='output', type=str, required=False, default='',
                      help="Save sampled templates")
     cli.add_argument("--splitter", dest="splitter", type=str, required=False,
                      default='empty', help='split the password according to the splitter. '
@@ -112,15 +118,17 @@ def wrapper():
                      help='number of samples for each class of templates')
     cli.add_argument("-m", "--mask", dest="mask", type=str, required=False, default="\t",
                      help='the mask to replace the origin characters in passwords')
+    cli.add_argument("--dupe", dest="dupe_factor", default=1, type=int, required=False,
+                     help="Duplications when generating masks of a password")
     args = cli.parse_args()
     pwd_file, splitter, p, (min_visible, min_masked), length_upper_bound, num_samples = \
         args.input, args.splitter.lower(), args.prob, args.constrains, args.length_bound, args.num_samples
-    output, mask = args.output, args.mask
+    output, mask, dupe_factor = args.output, args.mask, args.dupe_factor
     length_lower_bound = min_masked + min_visible
 
-    if not os.path.exists(output):
+    if output == '':
         print(f"\033[1;31;40m"
-              f"Note that the output does not exist. Therefore we'll not save the results."
+              f"Note that the `-o` option does not exist. Therefore we'll not save the results."
               f"\033[0m", file=sys.stderr)
     if splitter == 'empty':
         def line_splits(line: str):
@@ -134,31 +142,49 @@ def wrapper():
     def is_valid(line: str):
         return length_lower_bound <= len(line) <= length_upper_bound
 
-    passwords = read_passwords(password_file=pwd_file, line_splits=line_splits, is_valid=is_valid)
+    passwords_per_len = read_passwords(password_file=pwd_file, line_splits=line_splits, is_valid=is_valid)
     num_masked_prob_cache = {}
-    pwd_mask_dict = defaultdict(set)
-    for pwd in passwords:
-        masked_pwd = masking(pwd=pwd, p=p, min_visible=min_visible, min_masked=min_masked,
-                             num_masked_prob_cache=num_masked_prob_cache, mask=mask)
-        pwd_mask_dict[tuple(masked_pwd)].add(tuple(pwd))
-    print(f"templates: {len(pwd_mask_dict)}", file=sys.stderr)
     classes = [
         ('super-rare', [1, 5]),
         ('rare', [10, 15]),
         ('uncommon', [50, 150]),
         ('common', [1000, 15000])
     ]
-    templates_dict = defaultdict(set)
-    for masked_pwd, pwd_set in pwd_mask_dict.items():
-        for cls_name, (lower_bound, upper_bound) in classes:
-            if lower_bound <= len(pwd_set) <= upper_bound:
-                templates_dict[cls_name].add(masked_pwd)
-                break
-        pass
-    for cls_name, templates in templates_dict.items():
-        print(f"{cls_name}: {len(templates)}")
-    if os.path.exists(output):
-        save_templates(templates_dict, save=output)
+    if output != '' and not os.path.exists(output):
+        os.mkdir(output)
+    exist = os.path.exists(output)
+    pwd_mask_list, template_list = [], []
+    for pwd_len, passwords in passwords_per_len.items():
+        print(f"Parsing passwords with {pwd_len} items\r")
+        pwd_mask_dict = masking(
+            passwords=passwords, p=p, min_visible=min_visible, min_masked=min_masked,
+            num_masked_prob_cache=num_masked_prob_cache, mask=mask, dupe_factor=dupe_factor)
+        del passwords
+        templates_dict = {}
+        for masked_pwd, origins in pwd_mask_dict.items():
+            for cls_name, (lower_bound, upper_bound) in classes:
+                if lower_bound <= len(origins) <= upper_bound:
+                    if cls_name not in templates_dict:
+                        templates_dict[cls_name] = set()
+                    templates_dict[cls_name].add(masked_pwd)
+                    break
+        for cls_name, templates in templates_dict.items():
+            print(f"{cls_name}: {len(templates)}")
+        if exist:
+            pwd_mask_file = f"pwd_mask_dict_{pwd_len}.pickle"
+            template_file = f"template_dict_{pwd_len}.pickle"
+            with open(os.path.join(output, pwd_mask_file), 'wb') as f_out:
+                pickle.dump(pwd_mask_dict, f_out)
+            with open(os.path.join(output, template_file), 'wb') as f_template:
+                pickle.dump(templates_dict, f_template)
+            pwd_mask_list.append(pwd_mask_file)
+            template_list.append(template_file)
+
+        del pwd_mask_dict
+        del templates_dict
+    if exist and len(pwd_mask_list) > 0:
+        with open(os.path.join(output, "file_list.pickle"), 'wb') as f_list:
+            pickle.dump((pwd_mask_list, template_list), f_list)
     pass
 
 
