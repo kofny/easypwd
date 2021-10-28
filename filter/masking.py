@@ -154,7 +154,7 @@ def wrapper():
         os.mkdir(output)
     exist = os.path.exists(output)
     pwd_mask_list, template_list = [], []
-    for pwd_len, passwords in passwords_per_len.items():
+    for pwd_len, passwords in sorted(passwords_per_len.items(), key=lambda x: x[0]):
         print(f"Parsing passwords with {pwd_len} items\r")
         pwd_mask_dict = masking(
             passwords=passwords, p=p, min_visible=min_visible, min_masked=min_masked,
