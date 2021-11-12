@@ -99,7 +99,7 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
                 if len(pwd_mask_dict[masked_pwd]) <= 1:
                     del pwd_mask_dict[masked_pwd]
                 pass
-            print(f"Cleaning up from {origin_len:8,} to {len(pwd_mask_dict):8,} templates", file=sys.stderr)
+            print(f"Cleaning up from {origin_len:8,} to {len(pwd_mask_dict):8,} templates", end='\r', file=sys.stderr)
             cur_round = 0
             pass
         pass
