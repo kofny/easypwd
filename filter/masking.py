@@ -104,6 +104,7 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
             cur_round = 0
             pass
         pass
+    print("")
     return pwd_mask_dict
 
 
