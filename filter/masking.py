@@ -104,7 +104,7 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
             cur_round = 0
             pass
         pass
-    print("")
+    print(" " * 80, end='\r', file=sys.stderr)
     return pwd_mask_dict
 
 
@@ -195,7 +195,7 @@ def wrapper():
                     templates_dict[cls_name].add(masked_pwd)
                     break
         for cls_name, templates in templates_dict.items():
-            print(f"{cls_name:>12}: {len(templates):8,}")
+            print(f"{cls_name:>12}: {len(templates):>6,}")
         if exist:
             pwd_mask_file = f"pwd_mask_dict_{pwd_len}.pickle"
             template_file = f"template_dict_{pwd_len}.pickle"
