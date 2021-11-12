@@ -54,12 +54,12 @@ def wrapper():
                      help='the pickle file saving the file lists')
     cli.add_argument("-n", '--n-samples', dest='n_samples', required=False, type=int, default=30,
                      help='n samples for each class of templates')
-    cli.add_argument("--dupe", dest='dupe_factor', required=False, type=int, default=1,
+    cli.add_argument("--dup", dest='dup_factor', required=False, type=int, default=1,
                      help='set the times of sampling')
     args = cli.parse_args()
-    folder, n_samples, dupe_factor = args.input, args.n_samples, args.dupe_factor
+    folder, n_samples, dup_factor = args.input, args.n_samples, args.dup_factor
     template_dicts, pwd_mask_file_list = read_template_dicts(folder)
-    for i in range(dupe_factor):
+    for i in range(dup_factor):
         samples, template2passwords = sampling(template_dicts=template_dicts, n_samples=n_samples)
         for pwd_mask_file in pwd_mask_file_list:
             with open(os.path.join(folder, pwd_mask_file), 'rb') as f_pwd_mask:

@@ -54,11 +54,11 @@ def comb(n, m):
 
 # @profile
 def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: int,
-            num_masked_prob_cache: Dict[int, List[float]], mask='\t', dupe_factor: int = 1,
+            num_masked_prob_cache: Dict[int, List[float]], mask='\t', dup_factor: int = 1,
             cleanup: int = 100000, threshold4cleanup: int = 1) \
         -> Dict[Tuple, Set[Tuple]]:
     pwd_mask_dict = {}
-    cleanup = math.ceil(cleanup // dupe_factor)
+    cleanup = math.ceil(cleanup // dup_factor)
     cur_round = 0
     total_passwords = len(passwords)
     cur_pwd_idx = 0
@@ -79,8 +79,8 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
             prob_list = [prob / total for prob in prob_list]
             num_masked_prob_cache[n] = prob_list
             pass
-        dupe = dupe_factor
-        for _ in range(dupe):
+        dup = dup_factor
+        for _ in range(dup):
             idx = bisect.bisect_right(num_masked_prob_cache[n], random.random())
             m = min_masked + idx
             is_masks = [True] * m + [False] * (n - m)
@@ -147,7 +147,7 @@ def wrapper():
                      help='number of samples for each class of templates')
     cli.add_argument("-m", "--mask", dest="mask", type=str, required=False, default="\t",
                      help='the mask to replace the origin characters in passwords')
-    cli.add_argument("--dupe", dest="dupe_factor", default=1, type=int, required=False,
+    cli.add_argument("--dup", dest="dup_factor", default=1, type=int, required=False,
                      help="Duplications when generating masks of a password")
     cli.add_argument("--cleanup", dest="cleanup", default=100000, type=int, required=False,
                      help='cleanup the templates which correspond to too few passwords '
@@ -157,7 +157,7 @@ def wrapper():
     args = cli.parse_args()
     pwd_file, splitter, p, (min_visible, min_masked), length_upper_bound, num_samples = \
         args.input, args.splitter.lower(), args.prob, args.constrains, args.length_bound, args.num_samples
-    output, mask, dupe_factor = args.output, args.mask, args.dupe_factor
+    output, mask, dup_factor = args.output, args.mask, args.dup_factor
     cleanup, threshold4cleanup = args.cleanup, args.threshold4cleanup
     length_lower_bound = min_masked + min_visible
 
@@ -194,7 +194,7 @@ def wrapper():
         random.shuffle(passwords)
         pwd_mask_dict = masking(
             passwords=passwords, p=p, min_visible=min_visible, min_masked=min_masked,
-            num_masked_prob_cache=num_masked_prob_cache, mask=mask, dupe_factor=dupe_factor,
+            num_masked_prob_cache=num_masked_prob_cache, mask=mask, dup_factor=dup_factor,
             cleanup=cleanup, threshold4cleanup=threshold4cleanup,
         )
         del passwords
