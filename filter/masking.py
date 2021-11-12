@@ -90,11 +90,13 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
             pass
         cur_round += 1
         if cur_round >= cleanup:
+            print(f"Cleaning up! from {len(pwd_mask_dict):8,} templates to ", end='', file=sys.stderr)
             # cleanup keys whose corresponding values have at most five items.
             for masked_pwd in list(pwd_mask_dict.keys()):
                 if len(pwd_mask_dict[masked_pwd]) <= 2:
                     del pwd_mask_dict[masked_pwd]
                 pass
+            print(f"{len(pwd_mask_dict):8,} templates", file=sys.stderr)
             cur_round = 0
             pass
         pass
