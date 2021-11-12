@@ -9,8 +9,8 @@ import pickle
 
 def read_template_dicts(folder: str) -> Tuple[List[Dict[str, Set[str]]], List[str]]:
     file_list_pickle = os.path.join(folder, 'file_list.pickle')
-    with open(file_list_pickle, 'rb') as file_list_pickle:
-        pwd_mask_file_list, template_file_list = pickle.load(file_list_pickle)
+    with open(file_list_pickle, 'rb') as f_file_list_pickle:
+        pwd_mask_file_list, template_file_list = pickle.load(f_file_list_pickle)
         template_dicts = []
         for template_file in template_file_list:
             with open(os.path.join(folder, template_file), 'rb') as f_template:
@@ -58,12 +58,14 @@ def wrapper():
     folder, n_samples = args.input, args.n_samples
     template_dicts, pwd_mask_file_list = read_template_dicts(folder)
     samples, template2passwords = sampling(template_dicts=template_dicts, n_samples=n_samples)
+    del template_dicts
     for pwd_mask_file in pwd_mask_file_list:
         with open(os.path.join(folder, pwd_mask_file), 'rb') as f_pwd_mask:
             pwd_mask_dict: Dict[Tuple, Tuple] = pickle.load(f_pwd_mask)
             for masked, passwords in pwd_mask_dict.items():
                 if masked in template2passwords:
                     template2passwords[masked] = template2passwords[masked].union(passwords)
+            del pwd_mask_dict
 
     saved_filename = os.path.join(folder, 'sampled.pickle')
     saved_json = os.path.join(folder, 'sampled.json')
