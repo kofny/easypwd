@@ -195,7 +195,7 @@ def wrapper():
                     templates_dict[cls_name].add(masked_pwd)
                     break
         for cls_name, templates in templates_dict.items():
-            print(f"{cls_name}: {len(templates)}")
+            print(f"{cls_name:>12}: {len(templates):8,}")
         if exist:
             pwd_mask_file = f"pwd_mask_dict_{pwd_len}.pickle"
             template_file = f"template_dict_{pwd_len}.pickle"
