@@ -127,9 +127,10 @@ def wrapper():
     This file read a password dataset (one password per line) and randomly generate
     templates by replacing some characters in the passwords with the wildcard ('\\t').
     """, usage="""
-    [USAGE] 
     <program> -i <password dataset> -o <folder saving results> --dupe <parsing each password several times>
-    """)
+    + using a larger `--dupe` if you obtain too few templates;
+    + using `--cleanup` and `--threshold4cleanup` to save memory;
+    """, )
     cli.add_argument("-i", "--input", dest="input", type=str, required=True, help='Passwords to parse')
     cli.add_argument('-o', '--output-folder', dest='output', type=str, required=False, default='',
                      help="Save sampled templates")
@@ -150,7 +151,7 @@ def wrapper():
                      help="Duplications when generating masks of a password")
     cli.add_argument("--cleanup", dest="cleanup", default=100000, type=int, required=False,
                      help='cleanup the templates which correspond to too few passwords '
-                          '(determined by `threshold4cleanup` option)')
+                          '(depending on the `--threshold4cleanup` option)')
     cli.add_argument("--threshold4cleanup", dest='threshold4cleanup', default=1, type=int, required=False,
                      help='remove the template if its corresponding passwords is no more than `threshold4cleanup`')
     args = cli.parse_args()
