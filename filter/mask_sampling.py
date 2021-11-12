@@ -54,30 +54,35 @@ def wrapper():
                      help='the pickle file saving the file lists')
     cli.add_argument("-n", '--n-samples', dest='n_samples', required=False, type=int, default=30,
                      help='n samples for each class of templates')
+    cli.add_argument("--dupe", dest='dupe_factor', required=False, type=int, default=1,
+                     help='set the times of sampling')
     args = cli.parse_args()
-    folder, n_samples = args.input, args.n_samples
+    folder, n_samples, dupe_factor = args.input, args.n_samples, args.dupe_factor
     template_dicts, pwd_mask_file_list = read_template_dicts(folder)
-    samples, template2passwords = sampling(template_dicts=template_dicts, n_samples=n_samples)
-    del template_dicts
-    for pwd_mask_file in pwd_mask_file_list:
-        with open(os.path.join(folder, pwd_mask_file), 'rb') as f_pwd_mask:
-            pwd_mask_dict: Dict[Tuple, Tuple] = pickle.load(f_pwd_mask)
-            for masked, passwords in pwd_mask_dict.items():
-                if masked in template2passwords:
-                    template2passwords[masked] = template2passwords[masked].union(passwords)
-            del pwd_mask_dict
+    for i in range(dupe_factor):
+        samples, template2passwords = sampling(template_dicts=template_dicts, n_samples=n_samples)
+        for pwd_mask_file in pwd_mask_file_list:
+            with open(os.path.join(folder, pwd_mask_file), 'rb') as f_pwd_mask:
+                pwd_mask_dict: Dict[Tuple, Tuple] = pickle.load(f_pwd_mask)
+                for masked, passwords in pwd_mask_dict.items():
+                    if masked in template2passwords:
+                        template2passwords[masked] = template2passwords[masked].union(passwords)
+                del pwd_mask_dict
+        tag_i = f"sampled-{i}"
+        saved_filename = os.path.join(folder, f'{tag_i}.pickle')
+        saved_json = os.path.join(folder, f'{tag_i}.json')
+        with open(saved_filename, 'wb') as f_save:
+            print(f"pickle file is saved here: {saved_filename}")
+            pickle.dump((samples, template2passwords), file=f_save)
+        with open(saved_json, 'w') as f_save:
+            print(f"json file is saved here: {saved_json}")
+            samples_printable = {cls_name: [" ".join(i) for i in v] for cls_name, v in samples.items()}
+            template2passwords_printable = {" ".join(k): [" ".join(i) for i in v] for k, v in
+                                            template2passwords.items()}
+            json.dump((samples_printable, template2passwords_printable), fp=f_save, indent=2)
+        del samples, samples_printable, template2passwords_printable, template2passwords
+        pass
 
-    saved_filename = os.path.join(folder, 'sampled.pickle')
-    saved_json = os.path.join(folder, 'sampled.json')
-    with open(saved_filename, 'wb') as f_save:
-        print(f"pickle file is saved here: {saved_filename}")
-        pickle.dump((samples, template2passwords), file=f_save)
-    with open(saved_json, 'w') as f_save:
-        print(f"json file is saved here: {saved_json}")
-        samples_printable = {cls_name: [" ".join(i) for i in v] for cls_name, v in samples.items()}
-        template2passwords_printable = {" ".join(k): [" ".join(i) for i in v] for k, v in template2passwords.items()}
-        json.dump((samples_printable, template2passwords_printable), fp=f_save, indent=2)
-    pass
 
 
 if __name__ == '__main__':
