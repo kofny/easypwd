@@ -100,7 +100,10 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
                 if len(pwd_mask_dict[masked_pwd]) <= threshold4cleanup:
                     del pwd_mask_dict[masked_pwd]
                 pass
-            print(f"[{cur_pwd_idx:8,}] Cleaning up from {origin_len:8,} to {len(pwd_mask_dict):8,} templates", end='\r', file=sys.stderr)
+            print(
+                f"[{cur_pwd_idx:8,} / {total_passwords:8,} = {cur_pwd_idx / total_passwords * 100:5.2f}%] "
+                f"Cleaning up from {origin_len:8,} to {len(pwd_mask_dict):8,} templates",
+                end='\r', file=sys.stderr)
             cur_round = 0
             pass
         pass
