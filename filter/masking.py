@@ -101,7 +101,7 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
                     del pwd_mask_dict[masked_pwd]
                 pass
             print(
-                f"[{cur_pwd_idx:8,} / {total_passwords:8,} = {cur_pwd_idx / total_passwords * 100:5.2f}%] "
+                f"[{cur_pwd_idx / total_passwords * 100:5.2f}%] "
                 f"Cleaning up from {origin_len:8,} to {len(pwd_mask_dict):8,} templates",
                 end='\r', file=sys.stderr)
             cur_round = 0
@@ -122,7 +122,14 @@ def save_templates(templates_dict: Dict[str, Set], save: str):
 
 # @profile
 def wrapper():
-    cli = argparse.ArgumentParser("Masking passwords")
+    cli = argparse.ArgumentParser("Masking passwords", description="""
+    [README]
+    This file read a password dataset (one password per line) and randomly generate
+    templates by replacing some characters in the passwords with the wildcard ('\\t').
+    """, usage="""
+    [USAGE] 
+    <program> -i <password dataset> -o <folder saving results> --dupe <parsing each password several times>
+    """)
     cli.add_argument("-i", "--input", dest="input", type=str, required=True, help='Passwords to parse')
     cli.add_argument('-o', '--output-folder', dest='output', type=str, required=False, default='',
                      help="Save sampled templates")
@@ -182,7 +189,7 @@ def wrapper():
     exist = os.path.exists(output)
     pwd_mask_list, template_list = [], []
     for pwd_len, passwords in sorted(passwords_per_len.items(), key=lambda x: x[0]):
-        print(f"Parsing {len(passwords):8,} passwords with {pwd_len:2} items\r")
+        print(f"Parsing {len(passwords):10,} passwords with {pwd_len:2} items\r")
         random.shuffle(passwords)
         pwd_mask_dict = masking(
             passwords=passwords, p=p, min_visible=min_visible, min_masked=min_masked,
