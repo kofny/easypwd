@@ -57,6 +57,8 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
             num_masked_prob_cache: Dict[int, List[float]], mask='\t', dupe_factor: int = 1) \
         -> Dict[Tuple, Set[Tuple]]:
     pwd_mask_dict = {}
+    cleanup = math.ceil(10000 // dupe_factor)
+    cur_round = 0
     for pwd in passwords:
         n = len(pwd)
         max_masked = n - min_visible
@@ -86,7 +88,16 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
                 pwd_mask_dict[masked_pwd] = set()
             pwd_mask_dict[masked_pwd].add(tuple(pwd))
             pass
-
+        cur_round += 1
+        if cur_round >= cleanup:
+            # cleanup keys whose corresponding values have at most five items.
+            for masked_pwd in list(pwd_mask_dict.keys()):
+                if len(pwd_mask_dict[masked_pwd]) <= 2:
+                    del pwd_mask_dict[masked_pwd]
+                pass
+            cur_round = 0
+            pass
+        pass
     return pwd_mask_dict
 
 
