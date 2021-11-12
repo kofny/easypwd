@@ -59,6 +59,8 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
     pwd_mask_dict = {}
     cleanup = math.ceil(10000 // dupe_factor)
     cur_round = 0
+    total_passwords = len(passwords)
+    cur_pwd_idx = 0
     for pwd in passwords:
         n = len(pwd)
         max_masked = n - min_visible
@@ -89,14 +91,15 @@ def masking(passwords: List[List[str]], p: float, min_visible: int, min_masked: 
             pwd_mask_dict[masked_pwd].add(tuple(pwd))
             pass
         cur_round += 1
-        if cur_round >= cleanup:
-            print(f"Cleaning up! from {len(pwd_mask_dict):8,} templates to ", end='', file=sys.stderr)
+        cur_pwd_idx += 1
+        if cur_round >= cleanup or cur_pwd_idx == total_passwords:
+            origin_len = len(pwd_mask_dict)
             # cleanup keys whose corresponding values have at most five items.
             for masked_pwd in list(pwd_mask_dict.keys()):
-                if len(pwd_mask_dict[masked_pwd]) <= 2:
+                if len(pwd_mask_dict[masked_pwd]) <= 1:
                     del pwd_mask_dict[masked_pwd]
                 pass
-            print(f"{len(pwd_mask_dict):8,} templates", file=sys.stderr)
+            print(f"Cleaning up from {origin_len:8,} to {len(pwd_mask_dict):8,} templates", file=sys.stderr)
             cur_round = 0
             pass
         pass
