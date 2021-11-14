@@ -37,7 +37,7 @@ def match(pwd: Tuple, template: Tuple, mask: str):
     return True
 
 
-def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], at_least: int):
+def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], at_least: int, **kwargs):
     random.shuffle(passwords)
     classes = [
         ('super-rare', [1, 5]),
@@ -48,25 +48,25 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
     pwd_mask_dict = {}
     min_visible, min_masked = 4, 5
     p = 0.5  # the prob of masking a character or a chunk
-    dup = 30
+    dup = kwargs['dup']
     mask = '\t'
-    threshold4cleanup = 1
-    cleanup_freq = 10000
+    threshold4cleanup = kwargs['threshold4cleanup']
+    cleanup_freq = kwargs['cleanup_freq']
     check_freq = 100
 
     def check(_pwd_mask_dict, cleanup: bool):
         _templates_dict = {}
         _keys = list(_pwd_mask_dict.keys())
         for _masked_pwd in _keys:
-            origins = _pwd_mask_dict[_masked_pwd]
-            if cleanup and len(origins) <= threshold4cleanup:
+            _origins = _pwd_mask_dict[_masked_pwd]
+            if cleanup and len(_origins) <= threshold4cleanup:
                 del _pwd_mask_dict[_masked_pwd]
                 continue
-            for cls_name, (lower_bound, upper_bound) in classes:
-                if lower_bound <= len(origins) <= upper_bound:
-                    if cls_name not in _templates_dict:
-                        _templates_dict[cls_name] = set()
-                    _templates_dict[cls_name].add(masked_pwd)
+            for _cls_name, (lower_bound, upper_bound) in classes:
+                if lower_bound <= len(_origins) <= upper_bound:
+                    if _cls_name not in _templates_dict:
+                        _templates_dict[_cls_name] = set()
+                    _templates_dict[_cls_name].add(_masked_pwd)
                     break
         _ok = len(_templates_dict) == len(classes) and all(
             [len(_templates) >= at_least for _, _templates in _templates_dict.items()])
@@ -137,16 +137,27 @@ def wrapper():
     cli.add_argument("-l", "--length-bound", dest="length_bound", type=str, required=False, default=16,
                      help='length longer than the bound will be ignored')
     cli.add_argument("-s", '--save-in-folder', dest='save', type=str, required=True, help="save results in this folder")
+    cli.add_argument("--dup", dest="dup_factor", default=1, type=int, required=False,
+                     help="Duplications when generating masks of a password")
+    cli.add_argument("--cleanup", dest="cleanup", default=10000, type=int, required=False,
+                     help='cleanup the templates which correspond to too few passwords '
+                          '(depending on the `--threshold4cleanup` option)')
+    cli.add_argument("--threshold4cleanup", dest='threshold4cleanup', default=1, type=int, required=False,
+                     help='remove the template if its corresponding passwords is no more than `threshold4cleanup`')
     # cli.add_argument("")
     args = cli.parse_args()
     (min_visible, min_masked), length_upper_bound = args.constrains, args.length_bound
+    dup, cleanup_freq, threshold4cleanup = args.dup_factor, args.cleanup, args.threshold4cleanup
     save_folder = args.save
     if not os.path.exists(save_folder):
         os.mkdir(save_folder)
     len_pwd_cnt, passwords = read_pwd(pwd_file=args.passwords, len_lower_bound=min_visible + min_masked,
                                       len_upper_bound=length_upper_bound)
     # print(f"{len(len_pwd_cnt)} valid passwords found!", file=sys.stderr)
-    templates_dict, pwd_mask_dict = sampling(len_pwd_cnt=len_pwd_cnt, passwords=passwords, at_least=args.at_least)
+    templates_dict, pwd_mask_dict = sampling(
+        len_pwd_cnt=len_pwd_cnt, passwords=passwords, at_least=args.at_least,
+        cleanup_freq=cleanup_freq, threshold4cleanup=threshold4cleanup, dup=dup,
+    )
     masked_pickle = os.path.join(save_folder, 'masked.pickle')
     with open(masked_pickle, 'wb') as f_masked_pickle:
         pickle.dump((templates_dict, pwd_mask_dict), file=f_masked_pickle)
