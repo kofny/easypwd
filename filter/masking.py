@@ -122,8 +122,9 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
                         templates_dict[cls_name] = set()
                     if len(templates_dict[cls_name]) < at_least:
                         templates_dict[cls_name].add(masked_pwd)
+                    else:
+                        del pwd_mask_dict[masked_pwd]
                     break
-                    pass
                 pass
             msg = []
             for cls_name, _ in classes:
@@ -134,6 +135,7 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
             ok = len(templates_dict) == len(classes) and all(
                 [len(templates) >= at_least for templates in templates_dict.values()])
             if ok:
+                print("")
                 return templates_dict, pwd_mask_dict
             pass
         round_index += 1
