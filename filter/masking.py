@@ -48,29 +48,28 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
     pwd_mask_dict = {}
     min_visible, min_masked = 4, 5
     p = 0.5  # the prob of masking a character or a chunk
-    dup = kwargs['dup']
     mask = '\t'
     threshold4cleanup = kwargs['threshold4cleanup']
     cleanup_freq = kwargs['cleanup_freq']
     check_freq = 100
 
-    def check(_pwd_mask_dict, cleanup: bool):
-        _templates_dict = {}
-        _keys = list(_pwd_mask_dict.keys())
-        for _masked_pwd in _keys:
-            _origins = _pwd_mask_dict[_masked_pwd]
-            if cleanup and len(_origins) <= threshold4cleanup:
-                del _pwd_mask_dict[_masked_pwd]
-                continue
-            for _cls_name, (lower_bound, upper_bound) in classes:
-                if lower_bound <= len(_origins) <= upper_bound:
-                    if _cls_name not in _templates_dict:
-                        _templates_dict[_cls_name] = set()
-                    _templates_dict[_cls_name].add(_masked_pwd)
-                    break
-        _ok = len(_templates_dict) == len(classes) and all(
-            [len(_templates) >= at_least for _, _templates in _templates_dict.items()])
-        return _templates_dict, _ok
+    # def check(_pwd_mask_dict, cleanup: bool):
+    #     _templates_dict = {}
+    #     _keys = list(_pwd_mask_dict.keys())
+    #     for _masked_pwd in _keys:
+    #         _origins = _pwd_mask_dict[_masked_pwd]
+    #         if cleanup and len(_origins) <= threshold4cleanup:
+    #             del _pwd_mask_dict[_masked_pwd]
+    #             continue
+    #         for _cls_name, (lower_bound, upper_bound) in classes:
+    #             if lower_bound <= len(_origins) <= upper_bound:
+    #                 if _cls_name not in _templates_dict:
+    #                     _templates_dict[_cls_name] = set()
+    #                 _templates_dict[_cls_name].add(_masked_pwd)
+    #                 break
+    #     _ok = len(_templates_dict) == len(classes) and all(
+    #         [len(_templates) >= at_least for _, _templates in _templates_dict.items()])
+    #     return _templates_dict, _ok
 
     def comb(_n, _m):
         large, small = max(_m, _n - _m), min(_m, _n - _m)
@@ -80,25 +79,28 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
         return prod // d
 
     num_masked_prob_cache = {}
-    pwd_idx = 0
-    for pwd in passwords:
-        n = len(pwd)
-        max_masked = n - min_visible
-        if max_masked < min_masked:
-            raise Exception(f"The password should have at least {min_visible + min_masked} items, "
-                            f"but {len(pwd)}: {pwd}")
-            pass
-        if n not in num_masked_prob_cache:
-            prob_list = []
-            total = 0
-            for m in range(min_masked, max_masked + 1):
-                c = comb(n, m)
-                total += c * math.pow(p, m) * math.pow(1 - p, n - m)
-                prob_list.append(total)
-            prob_list = [prob / total for prob in prob_list]
-            num_masked_prob_cache[n] = prob_list
-            pass
-        for _ in range(dup):
+    templates_dict = {}
+    round_index = 1
+    total_passwords = len(passwords)
+    while True:
+        pwd_idx = 1
+        for pwd in passwords:
+            n = len(pwd)
+            max_masked = n - min_visible
+            if max_masked < min_masked:
+                raise Exception(f"The password should have at least {min_visible + min_masked} items, "
+                                f"but {len(pwd)}: {pwd}")
+                pass
+            if n not in num_masked_prob_cache:
+                prob_list = []
+                total = 0
+                for m in range(min_masked, max_masked + 1):
+                    c = comb(n, m)
+                    total += c * math.pow(p, m) * math.pow(1 - p, n - m)
+                    prob_list.append(total)
+                prob_list = [prob / total for prob in prob_list]
+                num_masked_prob_cache[n] = prob_list
+                pass
             idx = bisect.bisect_right(num_masked_prob_cache[n], random.random())
             m = min_masked + idx
             is_masks = [True] * m + [False] * (n - m)
@@ -110,21 +112,33 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
             pwd_len = len(pwd)
             for each_pwd in len_pwd_cnt[pwd_len].keys():
                 if match(each_pwd, masked_pwd, mask):
-                    pwd_mask_dict[masked_pwd].add(tuple(pwd))
-            pass
-        pwd_idx += 1
+                    pwd_mask_dict[masked_pwd].add(tuple(each_pwd))
+                    pass
+                pass
 
-        if pwd_idx % check_freq == 0:
-            before_check = len(pwd_mask_dict)
-            templates_dict, ok = check(_pwd_mask_dict=pwd_mask_dict, cleanup=pwd_idx % cleanup_freq == 0)
-            after_check = len(pwd_mask_dict)
-            print(f"{pwd_idx}-th passwords, len(pwd_mask_dict) is from {before_check} to {after_check}", end='\r',
-                  file=sys.stderr)
-            if ok:
-                return templates_dict, pwd_mask_dict
+            for cls_name, (lower_bound, upper_bound) in classes:
+                if lower_bound <= len(pwd_mask_dict[masked_pwd]) <= upper_bound:
+                    if cls_name not in templates_dict:
+                        templates_dict[cls_name] = set()
+                    if len(templates_dict[cls_name]) < at_least:
+                        templates_dict[cls_name].add(masked_pwd)
+                    break
+                    pass
+                pass
+            msg = []
+            for cls_name, _ in classes:
+                msg.append(f"{cls_name:10}: {len(templates_dict.get(cls_name, [])):4,}")
+            print(f"[R{round_index}, {pwd_idx / total_passwords * 100:5.2f}%] "
+                  f"{'; '.join(msg)}", end='\r', file=sys.stderr)
+            pass
+        ok = len(templates_dict) == len(classes) and all(
+            [len(templates) >= at_least for templates in templates_dict.values()])
+        if ok:
+            return templates_dict, pwd_mask_dict
+        round_index += 1
         pass
-    templates_dict, _ = check(_pwd_mask_dict=pwd_mask_dict, cleanup=True)
-    return templates_dict, pwd_mask_dict
+    # templates_dict, _ = check(_pwd_mask_dict=pwd_mask_dict, cleanup=True)
+    # return templates_dict, pwd_mask_dict
 
 
 def wrapper():
@@ -137,8 +151,6 @@ def wrapper():
     cli.add_argument("-l", "--length-bound", dest="length_bound", type=str, required=False, default=16,
                      help='length longer than the bound will be ignored')
     cli.add_argument("-s", '--save-in-folder', dest='save', type=str, required=True, help="save results in this folder")
-    cli.add_argument("--dup", dest="dup_factor", default=1, type=int, required=False,
-                     help="Duplications when generating masks of a password")
     cli.add_argument("--cleanup", dest="cleanup", default=10000, type=int, required=False,
                      help='cleanup the templates which correspond to too few passwords '
                           '(depending on the `--threshold4cleanup` option)')
@@ -147,7 +159,7 @@ def wrapper():
     # cli.add_argument("")
     args = cli.parse_args()
     (min_visible, min_masked), length_upper_bound = args.constrains, args.length_bound
-    dup, cleanup_freq, threshold4cleanup = args.dup_factor, args.cleanup, args.threshold4cleanup
+    cleanup_freq, threshold4cleanup = args.cleanup, args.threshold4cleanup
     save_folder = args.save
     if not os.path.exists(save_folder):
         os.mkdir(save_folder)
@@ -156,7 +168,7 @@ def wrapper():
     # print(f"{len(len_pwd_cnt)} valid passwords found!", file=sys.stderr)
     templates_dict, pwd_mask_dict = sampling(
         len_pwd_cnt=len_pwd_cnt, passwords=passwords, at_least=args.at_least,
-        cleanup_freq=cleanup_freq, threshold4cleanup=threshold4cleanup, dup=dup,
+        cleanup_freq=cleanup_freq, threshold4cleanup=threshold4cleanup
     )
     masked_pickle = os.path.join(save_folder, 'masked.pickle')
     with open(masked_pickle, 'wb') as f_masked_pickle:
