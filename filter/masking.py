@@ -127,9 +127,10 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
                 pass
             msg = []
             for cls_name, _ in classes:
-                msg.append(f"{cls_name:10}: {len(templates_dict.get(cls_name, [])):4,}")
-            print(f"[R{round_index}, {pwd_idx / total_passwords * 100:5.2f}%] "
+                msg.append(f"{cls_name:>10}: {len(templates_dict.get(cls_name, [])):4,}")
+            print(f"[R{round_index}, {pwd_idx / total_passwords * 100:7.4f}%] "
                   f"{'; '.join(msg)}", end='\r', file=sys.stderr)
+            pwd_idx += 1
             pass
         ok = len(templates_dict) == len(classes) and all(
             [len(templates) >= at_least for templates in templates_dict.values()])
@@ -163,8 +164,10 @@ def wrapper():
     save_folder = args.save
     if not os.path.exists(save_folder):
         os.mkdir(save_folder)
+    print("Pre-processing passwords...", end='', file=sys.stderr)
     len_pwd_cnt, passwords = read_pwd(pwd_file=args.passwords, len_lower_bound=min_visible + min_masked,
                                       len_upper_bound=length_upper_bound)
+    print(f"{len(passwords)} valid passwords.", file=sys.stderr)
     # print(f"{len(len_pwd_cnt)} valid passwords found!", file=sys.stderr)
     templates_dict, pwd_mask_dict = sampling(
         len_pwd_cnt=len_pwd_cnt, passwords=passwords, at_least=args.at_least,
@@ -178,5 +181,10 @@ def wrapper():
 
 
 if __name__ == '__main__':
-    wrapper()
+    try:
+        wrapper()
+    except KeyboardInterrupt:
+        print("\n"
+              "You cancelled the process", file=sys.stderr)
+        sys.exit(1)
     pass
