@@ -106,24 +106,23 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
             is_masks = [True] * m + [False] * (n - m)
             random.shuffle(is_masks)
             masked_pwd = tuple(mask if is_mask else item for item, is_mask in zip(pwd, is_masks))
-            # print(masked_pwd)
-            if masked_pwd not in pwd_mask_dict:
-                pwd_mask_dict[masked_pwd] = set()
+            matched_passwords = set()
             pwd_len = len(pwd)
             for each_pwd in len_pwd_cnt[pwd_len].keys():
                 if match(each_pwd, masked_pwd, mask):
-                    pwd_mask_dict[masked_pwd].add(tuple(each_pwd))
+                    matched_passwords.add(tuple(each_pwd))
                     pass
                 pass
 
             for cls_name, (lower_bound, upper_bound) in classes:
-                if lower_bound <= len(pwd_mask_dict[masked_pwd]) <= upper_bound:
+                if lower_bound <= len(matched_passwords) <= upper_bound:
                     if cls_name not in templates_dict:
                         templates_dict[cls_name] = set()
                     if len(templates_dict[cls_name]) < at_least:
                         templates_dict[cls_name].add(masked_pwd)
+                        pwd_mask_dict[masked_pwd] = matched_passwords
                     else:
-                        del pwd_mask_dict[masked_pwd]
+                        del matched_passwords
                     break
                 pass
             msg = []
