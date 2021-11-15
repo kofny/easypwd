@@ -128,14 +128,14 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
             msg = []
             for cls_name, _ in classes:
                 msg.append(f"{cls_name:>10}: {len(templates_dict.get(cls_name, [])):4,}")
-            print(f"[R{round_index}, {pwd_idx / total_passwords * 100:7.4f}%] "
+            print(f"[R{round_index:02}, {pwd_idx / total_passwords * 100:9.6f}%] "
                   f"{'; '.join(msg)}", end='\r', file=sys.stderr)
             pwd_idx += 1
+            ok = len(templates_dict) == len(classes) and all(
+                [len(templates) >= at_least for templates in templates_dict.values()])
+            if ok:
+                return templates_dict, pwd_mask_dict
             pass
-        ok = len(templates_dict) == len(classes) and all(
-            [len(templates) >= at_least for templates in templates_dict.values()])
-        if ok:
-            return templates_dict, pwd_mask_dict
         round_index += 1
         pass
     # templates_dict, _ = check(_pwd_mask_dict=pwd_mask_dict, cleanup=True)
