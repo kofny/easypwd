@@ -37,7 +37,81 @@ def match(pwd: Tuple, template: Tuple, mask: str):
     return True
 
 
-def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], at_least: int, **kwargs):
+def comb(_n, _m):
+    large, small = max(_m, _n - _m), min(_m, _n - _m)
+    prod = reduce(lambda x, y: x * y, list(range(large + 1, _n + 1)), 1)
+    d = reduce(lambda x, y: x * y, list(range(2, small + 1)), 1)
+
+    return prod // d
+
+
+def worker(passwords_share, passwords, len_pwd_cnt, at_least_share, min_visible, min_masked, mask, classes, p, messages,
+           msg_idx):
+    round_index = 1
+    total_passwords_share = len(passwords_share)
+    num_masked_prob_cache = {}
+    templates_dict = {}
+    pwd_mask_dict = {}
+    while True:
+        pwd_idx = 1
+        for pwd in passwords:
+            n = len(pwd)
+            max_masked = n - min_visible
+            if max_masked < min_masked:
+                raise Exception(f"The password should have at least {min_visible + min_masked} items, "
+                                f"but {len(pwd)}: {pwd}")
+                pass
+            if n not in num_masked_prob_cache:
+                prob_list = []
+                total = 0
+                for m in range(min_masked, max_masked + 1):
+                    c = comb(n, m)
+                    total += c * math.pow(p, m) * math.pow(1 - p, n - m)
+                    prob_list.append(total)
+                prob_list = [prob / total for prob in prob_list]
+                num_masked_prob_cache[n] = prob_list
+                pass
+            idx = bisect.bisect_right(num_masked_prob_cache[n], random.random())
+            m = min_masked + idx
+            is_masks = [True] * m + [False] * (n - m)
+            random.shuffle(is_masks)
+            masked_pwd = tuple(mask if is_mask else item for item, is_mask in zip(pwd, is_masks))
+            matched_passwords = set()
+            pwd_len = len(pwd)
+            for each_pwd in len_pwd_cnt[pwd_len].keys():
+                if match(each_pwd, masked_pwd, mask):
+                    matched_passwords.add(tuple(each_pwd))
+                    pass
+                pass
+
+            for cls_name, (lower_bound, upper_bound) in classes:
+                if lower_bound <= len(matched_passwords) <= upper_bound:
+                    if cls_name not in templates_dict:
+                        templates_dict[cls_name] = set()
+                    if len(templates_dict[cls_name]) < at_least_share:
+                        templates_dict[cls_name].add(masked_pwd)
+                        pwd_mask_dict[masked_pwd] = matched_passwords
+                    else:
+                        del matched_passwords
+                    break
+                pass
+            msg = []
+            for cls_name, _ in classes:
+                msg.append(f"{cls_name:>10}: {len(templates_dict.get(cls_name, [])):4,}")
+            msg = f"[R{round_index:02}, {pwd_idx / total_passwords_share * 100:9.6f}%] {'; '.join(msg)}"
+            messages[msg_idx] = msg
+            pwd_idx += 1
+            ok = len(templates_dict) == len(classes) and all(
+                [len(templates) >= at_least_share for templates in templates_dict.values()])
+            if ok:
+                return templates_dict, pwd_mask_dict
+            pass
+        round_index += 1
+        pass
+    pass
+
+
+def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], at_least: int):
     random.shuffle(passwords)
     classes = [
         ('super-rare', [1, 5]),
@@ -49,34 +123,6 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
     min_visible, min_masked = 4, 5
     p = 0.5  # the prob of masking a character or a chunk
     mask = '\t'
-    threshold4cleanup = kwargs['threshold4cleanup']
-    cleanup_freq = kwargs['cleanup_freq']
-    check_freq = 100
-
-    # def check(_pwd_mask_dict, cleanup: bool):
-    #     _templates_dict = {}
-    #     _keys = list(_pwd_mask_dict.keys())
-    #     for _masked_pwd in _keys:
-    #         _origins = _pwd_mask_dict[_masked_pwd]
-    #         if cleanup and len(_origins) <= threshold4cleanup:
-    #             del _pwd_mask_dict[_masked_pwd]
-    #             continue
-    #         for _cls_name, (lower_bound, upper_bound) in classes:
-    #             if lower_bound <= len(_origins) <= upper_bound:
-    #                 if _cls_name not in _templates_dict:
-    #                     _templates_dict[_cls_name] = set()
-    #                 _templates_dict[_cls_name].add(_masked_pwd)
-    #                 break
-    #     _ok = len(_templates_dict) == len(classes) and all(
-    #         [len(_templates) >= at_least for _, _templates in _templates_dict.items()])
-    #     return _templates_dict, _ok
-
-    def comb(_n, _m):
-        large, small = max(_m, _n - _m), min(_m, _n - _m)
-        prod = reduce(lambda x, y: x * y, list(range(large + 1, _n + 1)), 1)
-        d = reduce(lambda x, y: x * y, list(range(2, small + 1)), 1)
-
-        return prod // d
 
     num_masked_prob_cache = {}
     templates_dict = {}
@@ -171,8 +217,7 @@ def wrapper():
     print(f"{len(passwords)} valid passwords.", file=sys.stderr)
     # print(f"{len(len_pwd_cnt)} valid passwords found!", file=sys.stderr)
     templates_dict, pwd_mask_dict = sampling(
-        len_pwd_cnt=len_pwd_cnt, passwords=passwords, at_least=args.at_least,
-        cleanup_freq=cleanup_freq, threshold4cleanup=threshold4cleanup
+        len_pwd_cnt=len_pwd_cnt, passwords=passwords, at_least=args.at_least
     )
     masked_pickle = os.path.join(save_folder, 'masked.pickle')
     with open(masked_pickle, 'wb') as f_masked_pickle:
