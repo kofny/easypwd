@@ -11,6 +11,7 @@ from functools import partial
 
 def partial_count(file_name, ends_with: str):
     buffer = 1024 * 1024
+    print(f"Counting the number of lines...", file=sys.stderr, end='')
     with open(file_name) as f:
         return sum(x.count(ends_with) for x in iter(partial(f.read, buffer), ''))
 
@@ -19,6 +20,7 @@ def samp(corpus: str, samp_corpora: TextIO, samp_size: int, corpus_size: int, en
     pwd_set = []
     if corpus_size < 0:
         corpus_size = partial_count(corpus, ends_with)
+    print(f"{corpus_size:,} lines", file=sys.stderr)
     choices = set(random.sample(range(0, corpus_size), min(corpus_size, samp_size)))
     with open(corpus, 'r') as f_corpus:
         idx = 0
@@ -27,13 +29,15 @@ def samp(corpus: str, samp_corpora: TextIO, samp_size: int, corpus_size: int, en
             if idx in choices:
                 pwd_set.append(line)
             idx += 1
+            if idx % 100000 == 0:
+                print(f"{idx / corpus_size * 100:6.4}%", end='\r', file=sys.stderr)
         pass
 
     for line in pwd_set:
         samp_corpora.write(f"{line}\n")
     samp_corpora.flush()
     samp_corpora.close()
-    print("Done!", file=sys.stderr)
+    print("100.00% Done!   ", file=sys.stderr)
 
 
 def wrapper():
