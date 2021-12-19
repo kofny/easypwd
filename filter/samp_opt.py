@@ -44,7 +44,7 @@ def wrapper():
     cli = argparse.ArgumentParser('Sample some passwords from dataset')
     cli.add_argument('-c', '--corpus', dest='corpus', required=True, type=str,
                      help='corpus to be split')
-    cli.add_argument('--corpus-size', dest='corpus_size', required=False, default=-1,
+    cli.add_argument('--corpus-size', dest='corpus_size', required=False, default=-1, type=int,
                      help='specify the size of the corpus to save time')
     cli.add_argument('-s', '--sample-file', dest='samp_file', required=True, type=argparse.FileType("w"),
                      help="sampled file will be saved here")
