@@ -21,7 +21,13 @@ def samp(corpus: str, samp_corpora: TextIO, samp_size: int, corpus_size: int, en
     if corpus_size < 0:
         corpus_size = partial_count(corpus, ends_with)
     print(f"{corpus_size:,} lines", file=sys.stderr)
-    choices = set(random.sample(range(0, corpus_size), min(corpus_size, samp_size)))
+    target_size = min(corpus_size, samp_size)
+    choices = set()
+    for i in range(target_size):
+        choices.add(random.randint(i, corpus_size))
+        if i % 262144 == 0:
+            print(f"{i / corpus_size * 100:6.4}%", end='\r', file=sys.stderr)
+    print(f"100.00% Sampled!", file=sys.stderr)
     with open(corpus, 'r') as f_corpus:
         idx = 0
         for line in f_corpus:
@@ -29,7 +35,7 @@ def samp(corpus: str, samp_corpora: TextIO, samp_size: int, corpus_size: int, en
             if idx in choices:
                 pwd_set.append(line)
             idx += 1
-            if idx % 100000 == 0:
+            if idx % 262144 == 0:
                 print(f"{idx / corpus_size * 100:6.4}%", end='\r', file=sys.stderr)
         pass
 
