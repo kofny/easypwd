@@ -9,17 +9,16 @@ from typing import TextIO
 from functools import partial
 
 
-def partial_count(file_name):
+def partial_count(file_name, ends_with: str):
     buffer = 1024 * 1024
     with open(file_name) as f:
-        return sum(x.count('\n') for x in iter(partial(f.read, buffer), ''))
+        return sum(x.count(ends_with) for x in iter(partial(f.read, buffer), ''))
 
 
-def samp(corpus: str, samp_corpora: TextIO,
-         samp_size: int, corpus_size: int):
+def samp(corpus: str, samp_corpora: TextIO, samp_size: int, corpus_size: int, ends_with: str):
     pwd_set = []
     if corpus_size < 0:
-        corpus_size = partial_count(corpus)
+        corpus_size = partial_count(corpus, ends_with)
     choices = set(random.sample(range(0, corpus_size), min(corpus_size, samp_size)))
     with open(corpus, 'r') as f_corpus:
         idx = 0
@@ -30,7 +29,7 @@ def samp(corpus: str, samp_corpora: TextIO,
             idx += 1
         pass
 
-    for line in pwd_set[:samp_size]:
+    for line in pwd_set:
         samp_corpora.write(f"{line}\n")
     samp_corpora.flush()
     samp_corpora.close()
@@ -47,9 +46,12 @@ def wrapper():
                      help="sampled file will be saved here")
     cli.add_argument('-n', '--samp-size', dest='samp_size', required=True, type=int,
                      help='How many passwords should this script sample')
+    cli.add_argument('--ends-with', dest='ends_with', required=False, default='n', choices=['n', 'r', 'rn'],
+                     help='A line ends with \\n, \\r, or \\r\\n')
     args = cli.parse_args()
+    ends_with = {'n': '\n', 'r': '\r', "rn": "\r\n"}[args.ends_with]
     samp(args.corpus, args.samp_file, samp_size=args.samp_size,
-         corpus_size=args.corpus_size)
+         corpus_size=args.corpus_size, ends_with=ends_with)
     pass
 
 
