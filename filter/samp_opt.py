@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 optimised sampling process
 """
@@ -7,6 +6,7 @@ import random
 import sys
 from typing import TextIO
 from functools import partial
+import numpy
 
 
 def partial_count(file_name, ends_with: str):
@@ -22,21 +22,21 @@ def samp(corpus: str, samp_corpora: TextIO, samp_size: int, corpus_size: int, en
         corpus_size = partial_count(corpus, ends_with)
     print(f"{corpus_size:,} lines", file=sys.stderr)
     target_size = min(corpus_size, samp_size)
-    choices = set()
-    for i in range(target_size):
-        choices.add(random.randint(i, corpus_size))
-        if i % 262144 == 0:
-            print(f"{i / corpus_size * 100:6.4}%", end='\r', file=sys.stderr)
-    print(f"100.00% Sampled!", file=sys.stderr)
+    choices = numpy.sort(numpy.random.choice(corpus_size, target_size))
+    choice_i = 0
     with open(corpus, 'r') as f_corpus:
         idx = 0
         for line in f_corpus:
             line = line.strip("\r\n")
-            if idx in choices:
+            if idx == choices[choice_i]:
                 pwd_set.append(line)
+                choice_i += 1
+
             idx += 1
             if idx % 262144 == 0:
                 print(f"{idx / corpus_size * 100:6.4}%", end='\r', file=sys.stderr)
+            if choice_i == target_size:
+                break
         pass
 
     for line in pwd_set:
