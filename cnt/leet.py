@@ -422,6 +422,7 @@ class MyMultiWordDetector:
 
 path_found_l33t = os.path.join(os.path.dirname(__file__), "l33t.found")
 path_ignore_l33t = os.path.join(os.path.dirname(__file__), "l33t.ignore")
+print(path_ignore_l33t)
 
 
 def load_l33t_found() -> Set[str]:
@@ -507,12 +508,11 @@ def invalid(word: str):
     # pure alphas, pure digits, or pure others
     if limit_alpha(word):
         return True
-    # if word.startswith("#1") or word.endswith("#1"):
-    #     return True
+    if word.startswith("#1") or word.endswith("#1"):
+        return True
     counter = collections.Counter(lower)
     # 5i5i5i5i, o00oo0o
-    if min(counter.values()) <= ceil(len(word) / len(counter)) \
-            and max(counter.values()) >= floor(len(word) / len(counter)):
+    if 2 == len(counter) or 2 <= len(word) // len(counter) <= min(counter.values()):
         return True
     return re_invalid.search(lower)
 
@@ -723,6 +723,7 @@ class AsciiL33tDetector:
             return
         if invalid(pwd):
             return
+        
         is_l33t, leets = self.find_l33t(lower_pwd)
         if is_l33t:
             for leet in leets:
@@ -985,6 +986,72 @@ def wrapper():
     pass
 
 
+def wrapper4chunks():
+    cli = argparse.ArgumentParser("Leet Identification")
+    cli.add_argument("-c", "--corpus", dest="corpus", type=str, required=True,
+                     help="Training dataset for leet identification. "
+                          "We first collect leet patterns from training sets, "
+                          "then identify these leet patterns from given passwords.")
+    cli.add_argument("--chunks", dest="chunks", type=argparse.FileType('r'), required=True,
+                     help="Given chunks. We will identify leet patterns from these chunks.")
+    cli.add_argument("-o", "--output", dest="output", type=argparse.FileType('w'), required=True,
+                     help="Chunks which follow the leet patterns will appear in this file. "
+                          "Note that the 4th line is the start of the identified leet patterns.")
+    cli.add_argument('-p','--pickle', dest='pickle', type=str, required=False, default=None,
+                     help="read the model from dumped pickle file")
+    args = cli.parse_args()
+    f_out = args.output  # type: TextIO
+    if not f_out.writable():
+        print(f"{f_out.name} is not writable", file=sys.stderr)
+        sys.exit(-1)
+    dumped = args.pickle
+    if dumped is None:
+        leet_detector = obtain_leet_detector(corpus=args.corpus)
+    else:
+        if not os.path.exists(dumped):
+            leet_detector = obtain_leet_detector(corpus=args.corpus)
+            fd = open(dumped, 'wb')
+            pickle.dump(leet_detector, fd)
+            fd.close()
+        leet_detector = pickle.load(open(dumped, 'rb'))
+
+    pwd_set = args.chunks  # type: TextIO
+    chunk_dict = collections.defaultdict(int)
+    for line in pwd_set:
+        line = line.strip("\r\n")
+        chunk, cnt = line.split(' ')
+        chunk = chunk.strip('\x01')
+        chunk_dict[chunk] += int(cnt)
+    containing_leet = 0
+    total = sum(chunk_dict.values())
+    leet_dict = {**leet_detector.l33t_map}
+    for valid_leet in valid_set:
+        leet_dict[valid_leet] = 0
+    # if True:
+    #     return
+    # print(leet_dict)
+    res = collections.defaultdict(int)
+    for chunk, cnt in chunk_dict.items():
+        lchunk = chunk.lower()
+        if lchunk in leet_dict and lchunk not in ignore_set:
+            res[chunk] += cnt
+            containing_leet += cnt
+    info = f"Containing leet patterns: {containing_leet},\n" \
+           f"Total passwords: {total},\n" \
+           f"Proportion: {containing_leet / total * 100:7.4f}\\%"
+    print(info)
+    print(info, file=f_out)
+    for leet_pattern, num in sorted(res.items(), key=lambda x: x[1], reverse=True):
+        if num > 0:
+            f_out.write(f"{leet_pattern}\t{num}\t{num / total * 100:7.4f}\n")
+        else:
+            break
+    f_out.flush()
+    f_out.close()
+
+    pass
+
+
 def test_unleet():
     ttt = AsciiL33tDetector(None)
     t111 = ttt.unleet("_love")
@@ -996,5 +1063,5 @@ def test_unleet():
 
 
 if __name__ == '__main__':
-    wrapper()
+    wrapper4chunks()
     pass

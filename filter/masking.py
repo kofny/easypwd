@@ -117,7 +117,7 @@ def sampling(len_pwd_cnt: Dict[int, Dict[Tuple, int]], passwords: List[Tuple], a
         ('super-rare', [1, 5]),
         ('rare', [10, 15]),
         ('uncommon', [50, 150]),
-        ('common', [1000, 15000])
+        ('common', [1000, 1500])
     ]
     pwd_mask_dict = {}
     min_visible, min_masked = 4, 5
