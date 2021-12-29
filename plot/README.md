@@ -49,6 +49,8 @@ The process is generally:
 22. `--force-update` means that we want to read raw date from password_rank file, instead of only update parameters
     like `color`, `line width`
 
+Note that in the json file, `total < -1 ` is equal to "we do not need to divide total".
+
 ## lines.py
 
 **Required**

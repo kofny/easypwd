@@ -9,18 +9,22 @@ from typing import Dict, Tuple, Callable, List, Union
 import numpy
 import pandas as pd
 
+"""
+total <= 0 refers to that we will not divide total to apply y_list
+"""
 
-def read_cdf(file: str) -> Tuple[List[int], List[float]]:
+
+def read_cdf(file: str) -> Tuple[List[int], List[float], int]:
     with open(file) as f_file:
         data = pd.read_csv(f_file, names=["rank", "freq"])
         raw = list(numpy.array(data[["freq"]]))
         y = [i[0].split('/') for i in raw]
         y = [float(a[0]) / float(a[-1]) for a in y]
         x = [int(i) for i in list(numpy.array(data[['rank']]))]
-        return x, y
+        return x, y, -1
 
 
-def read_adams(file: str) -> Tuple[List[float], List[float]]:
+def read_adams(file: str) -> Tuple[List[float], List[float], int]:
     import re
     with open(file) as f_src:
         x, y = [], []
@@ -32,12 +36,12 @@ def read_adams(file: str) -> Tuple[List[float], List[float]]:
                 guess, cracked = g.groups()
                 x.append(int(guess))
                 y.append(float(cracked))
-        return x, y
+        return x, y, -1
 
 
 def wrapper():
     cli = argparse.ArgumentParser("Parse data in various format into `default.json`-format")
-    task_func_dict: Dict[str, Callable[[str], Tuple[List[Union[float, int]], List[float]]]] = {
+    task_func_dict: Dict[str, Callable[[str], Tuple[List[Union[float, int]], List[float], int]]] = {
         'cdf': read_cdf,
         'adams': read_adams,
     }
@@ -86,11 +90,12 @@ def wrapper():
             raise Exception("onoffseq should have even items!")
         line_style = (offset, tuple(onoffseq))
     chosen_task = task_func_dict[args.task]
-    x, y = chosen_task(args.fd_in)
+    x, y, total = chosen_task(args.fd_in)
     text_color = args.color if args.color is not None else "black"
     json.dump({
         "label": args.label,
-        "total": x[-1],
+        "total": total,
+        "need_divide_total": total > 0,
         "marker": args.marker,
         "marker_size": args.marker_size,
         "mark_every": args.mark_every,

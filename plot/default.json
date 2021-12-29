@@ -1,6 +1,7 @@
 {
   "label": "default label",
   "total": 10,
+  "need_divide_total": true,
   "marker": "+",
   "marker_size": 3,
   "mark_every": 10,

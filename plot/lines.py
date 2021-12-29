@@ -145,7 +145,6 @@ class PlotParams:
         self.fig_size = args.fig_size
         self.no_boarder = args.no_boarder
         self.show_text = args.show_text
-        self.use_rate = not args.use_acc_freq
 
         if not (len(self.vlines) == len(self.vline_width) == len(self.vline_color) == len(self.vlines)):
             print(f"vlines should have same number of parameters", file=sys.stderr)
@@ -167,7 +166,7 @@ class PlotParams:
 
 
 class LineParam:
-    def __init__(self, json_file: TextIO, close_fd: bool, use_rate: bool = True):
+    def __init__(self, json_file: TextIO, close_fd: bool):
         """
         Note that x_list, y_list and total are required, while others are optional
         :param json_file: json file
@@ -176,14 +175,10 @@ class LineParam:
         """
         data: Dict[Any, Any] = json.load(json_file)
         y_list = data["y_list"]
-        if use_rate:
-            if not data.get("total"):
-                print(f"[WARNING] The given file ``{json_file.name}`` contains no field of ``total`` or ``total = 0``, "
-                      f"which is required when ``use-rate`` is true.\n"
-                      f"Therefore, use-rate becomes ``false`` automatically", file=sys.stderr)
-            else:
-                total = data["total"]
-                y_list = [cracked / total * 100 for cracked in y_list]
+        need_divide_total = data.get('need_divide_total', True)
+        if need_divide_total and data.get("total", -1) > 0:
+            total = data["total"]
+            y_list = [cracked / total * 100 for cracked in y_list]
         if close_fd:
             json_file.close()
         elif json_file.seekable():
@@ -222,7 +217,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         inner = ax.inset_axes(plot_params.sub_params.inset_axes)
         pass
     for json_file in json_files:
-        line_params = LineParam(json_file=json_file, close_fd=close_fd, use_rate=plot_params.use_rate)
+        line_params = LineParam(json_file=json_file, close_fd=close_fd)
         line, = plt.plot(line_params.x_list, line_params.y_list, color=line_params.color,
                          marker=line_params.marker, markersize=line_params.marker_size,
                          markevery=line_params.mark_every, linewidth=line_params.line_width,
@@ -405,9 +400,6 @@ def main():
                      help='do not display boarder listed here')
     cli.add_argument("--show-text", required=False, dest="show_text", action="store_true",
                      help="show label text at right")
-    cli.add_argument("--use-acc-freq", required=False, dest="use_acc_freq", action="store_true",
-                     help="Use the acc freq of y, e.g., y_1 = 1, total = 10, "
-                          "then we display y_1 = 1 instead of 1/10 in the figure")
     cli.add_argument("--font", required=False, dest="global_font", default=None, type=str,
                      help="set the font, could be Chinese font")
     cli.add_argument("--inset-axes", required=False, dest='inset_axes', default=None, nargs=4, type=float,
