@@ -144,13 +144,13 @@ def jsonify(label: str, fd_gc: TextIO, fd_save: str, fd_dict: TextIO,
         "color": color,
         "line_style": line_style,
         "line_width": line_width,
-        "x_list": guesses_list,
-        "y_list": cracked_list,
         "text_x": text_x,
         "text_y": text_y,
         "text_fontsize": text_fontsize,
         "text_color": text_color,
         "show_text": show_text,
+        "x_list": guesses_list,
+        "y_list": cracked_list,
     }
     fd_json = open(fd_save, 'w')
     json.dump(curve, fd_json, indent=2)

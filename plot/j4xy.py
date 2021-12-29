@@ -4,27 +4,49 @@ Json for CDF Zipf (j4cdf)
 """
 import argparse
 import json
-from typing import TextIO
+from typing import Dict, Tuple, Callable, List, Union
 
 import numpy
 import pandas as pd
 
 
-def read_data(file: TextIO):
-    data = pd.read_csv(file, names=["rank", "freq"])
-    raw = list(numpy.array(data[["freq"]]))
-    y = [i[0].split('/') for i in raw]
-    y = [float(a[0]) / float(a[-1]) for a in y]
-    x = [int(i) for i in list(numpy.array(data[['rank']]))]
-    return x, y
+def read_cdf(file: str) -> Tuple[List[int], List[float]]:
+    with open(file) as f_file:
+        data = pd.read_csv(f_file, names=["rank", "freq"])
+        raw = list(numpy.array(data[["freq"]]))
+        y = [i[0].split('/') for i in raw]
+        y = [float(a[0]) / float(a[-1]) for a in y]
+        x = [int(i) for i in list(numpy.array(data[['rank']]))]
+        return x, y
+
+
+def read_adams(file: str) -> Tuple[List[float], List[float]]:
+    import re
+    with open(file) as f_src:
+        x, y = [], []
+        data = re.compile(r"\[LOG]: \(#guesses: (\d+) \|~10\^\d\|\)\t\(recovered: ([.\d]+)%\)")
+        for line in f_src:
+            line = line.strip("\r\n")
+            g = data.match(line)
+            if g is not None:
+                guess, cracked = g.groups()
+                x.append(int(guess))
+                y.append(float(cracked))
+        return x, y
 
 
 def wrapper():
-    cli = argparse.ArgumentParser("Parse CDF data")
+    cli = argparse.ArgumentParser("Parse data in various format into `default.json`-format")
+    task_func_dict: Dict[str, Callable[[str], Tuple[List[Union[float, int]], List[float]]]] = {
+        'cdf': read_cdf,
+        'adams': read_adams,
+    }
     cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
                      help="how to identify this curve")
-    cli.add_argument("-f", "--file", required=False, dest="fd_in", type=argparse.FileType("r"),
+    cli.add_argument("-f", "--file", required=False, dest="fd_in", type=str,
                      default=None, help="CDF Zipf result file to be parsed")
+    cli.add_argument('-t', "--task", required=True, dest='task', type=str, choices=['cdf', 'adams'],
+                     help='Choose the task you want to call')
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=str,
                      help="save parsed data here")
     cli.add_argument("--lower", required=False, dest="lower_bound", default=0, type=int,
@@ -63,7 +85,8 @@ def wrapper():
         if len(onoffseq) % 2 != 0:
             raise Exception("onoffseq should have even items!")
         line_style = (offset, tuple(onoffseq))
-    x, y = read_data(args.fd_in)
+    chosen_task = task_func_dict[args.task]
+    x, y = chosen_task(args.fd_in)
     text_color = args.color if args.color is not None else "black"
     json.dump({
         "label": args.label,
@@ -74,13 +97,13 @@ def wrapper():
         "color": args.color,
         "line_style": line_style,
         "line_width": args.line_width,
-        "x_list": x,
-        "y_list": y,
         "text_x": args.text_x,
         "text_y": args.text_y,
         "text_fontsize": args.text_fontsize,
         "text_color": text_color,
         "show_text": args.show_text,
+        "x_list": x,
+        "y_list": y,
     }, open(args.fd_save, "w"), indent=2)
     pass
 
