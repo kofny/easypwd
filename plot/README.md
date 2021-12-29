@@ -67,6 +67,10 @@ The process is generally:
 - --xlabel-size: font size of x label
 - --ylabel-size: font size of y label
 
+**Optional for lines**
+
+- --use-acc-freq: do not operate the y value, use accurate frequency (or probability).
+
 **Optional for axis**
 
 - --xlim-low: x value less than this will not be displayed
