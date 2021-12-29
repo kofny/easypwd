@@ -63,7 +63,8 @@ class SubParams:
         if not isinstance(args.subfig_xticks, list) or \
                 not isinstance(args.subfig_xticklabels, list) or \
                 len(args.subfig_xticks) != len(args.subfig_xticklabels):
-            print(f"Make sure that --subfig-xticks has the same number of elements with --subfig-xticklabels",
+            print(f"Make sure that --subfig-xticks ({len(args.subfig_xticks)}) "
+                  f"has the same number of elements with --subfig-xticklabels ({len(args.subfig_xticklabels)})",
                   file=sys.stderr)
             sys.exit(1)
         if not isinstance(args.subfig_yticks, list) or \
@@ -412,25 +413,25 @@ def main():
     cli.add_argument("--inset-axes", required=False, dest='inset_axes', default=None, nargs=4, type=float,
                      help="(x y w h), (x, y) represents the position of the bottom left corner, "
                           "(w, h) represents the width and the height of the subfig")
-    cli.add_argument("--subfig-xmin", required=False, dest="subfig_xmin", type=float,
+    cli.add_argument("--subfig-xmin", required=False, dest="subfig_xmin", type=float, default=0.0,
                      help="the minimum x to show in the subfig")
-    cli.add_argument("--subfig-xmax", required=False, dest="subfig_xmax", type=float,
+    cli.add_argument("--subfig-xmax", required=False, dest="subfig_xmax", type=float, default=0.0,
                      help="the maximum x to show in the subfig")
-    cli.add_argument("--subfig-ymin", required=False, dest="subfig_ymin", type=float,
+    cli.add_argument("--subfig-ymin", required=False, dest="subfig_ymin", type=float, default=0.0,
                      help="the minimum y to show in the subfig")
-    cli.add_argument("--subfig-ymax", required=False, dest="subfig_ymax", type=float,
+    cli.add_argument("--subfig-ymax", required=False, dest="subfig_ymax", type=float, default=0.0,
                      help="the maximum y to show in the subfig")
     cli.add_argument("--subfig-xticks", required=False, dest="subfig_xticks", type=float, nargs='+',
-                     help="x ticks for subfig")
+                     default=[], help="x ticks for subfig")
     cli.add_argument("--subfig-xticklabels", required=False, dest="subfig_xticklabels", type=str, nargs='+',
-                     help="x tick labels for subfig")
+                     default=[], help="x tick labels for subfig")
     cli.add_argument("--subfig-yticks", required=False, dest="subfig_yticks", type=float, nargs='+',
-                     help="y ticks for subfig")
+                     default=[], help="y ticks for subfig")
     cli.add_argument("--subfig-yticklabels", required=False, dest="subfig_yticklabels", type=str, nargs='+',
-                     help="y tick labels for subfig")
+                     default=[], help="y tick labels for subfig")
     cli.add_argument("--subfig-tick-size", required=False, dest="subfig_tickfontsize", type=int,
                      help="fontsize of the ticks")
-    cli.add_argument("--mark-inset", required=False, nargs=2, type=int, choices=[1, 2, 3, 4],
+    cli.add_argument("--mark-inset", required=False, nargs=2, type=int, choices=[1, 2, 3, 4], default=(2, 4),
                      help="mark inset for subfig")
 
     def patch_type(v):
