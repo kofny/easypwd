@@ -73,7 +73,7 @@ def wrapper():
                      default=None, help="CDF Zipf result file to be parsed")
     cli.add_argument('-t', "--task", required=True, dest='task', type=str, choices=list(task_func_dict.keys()),
                      help='Choose the task you want to call')
-    cli.add_argument("--total", default=-1, tyee=int,
+    cli.add_argument("--total", default=-1, type=int,
                      help='the total number. It is useful when we calculate the percentage')
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=str,
                      help="save parsed data here")
