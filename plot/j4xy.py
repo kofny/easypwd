@@ -35,7 +35,7 @@ def read_adams(file: str) -> Tuple[List[float], List[float]]:
             if g is not None:
                 guess, cracked = g.groups()
                 x.append(int(guess))
-                y.append(float(cracked))
+                y.append(float(cracked) * 100)
         return x, y
 
 
