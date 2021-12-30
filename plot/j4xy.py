@@ -14,17 +14,17 @@ total <= 0 refers to that we will not divide total to apply y_list
 """
 
 
-def read_cdf(file: str) -> Tuple[List[int], List[float], int]:
+def read_cdf(file: str) -> Tuple[List[int], List[float]]:
     with open(file) as f_file:
         data = pd.read_csv(f_file, names=["rank", "freq"])
         raw = list(numpy.array(data[["freq"]]))
         y = [i[0].split('/') for i in raw]
         y = [float(a[0]) / float(a[-1]) for a in y]
         x = [int(i) for i in list(numpy.array(data[['rank']]))]
-        return x, y, -1
+        return x, y
 
 
-def read_adams(file: str) -> Tuple[List[float], List[float], int]:
+def read_adams(file: str) -> Tuple[List[float], List[float]]:
     import re
     with open(file) as f_src:
         x, y = [], []
@@ -36,21 +36,45 @@ def read_adams(file: str) -> Tuple[List[float], List[float], int]:
                 guess, cracked = g.groups()
                 x.append(int(guess))
                 y.append(float(cracked))
-        return x, y, -1
+        return x, y
+
+
+def read_gc(file: str) -> Tuple[List[float], List[float]]:
+    with open(file) as f_src:
+        x, y = [], []
+        for line in f_src:
+            _, _, _, rank, cracked, _ = line.strip("\r\n").split("\t")
+            x.append(int(rank))
+            y.append(int(cracked))
+        return x, y
+
+
+def read_bert_adams(file: str):
+    with open(file) as f_src:
+        x, y = [], []
+        for line in f_src:
+            _, _, _, rank, _, acc = line.strip("\r\n").split('\t')
+            x.append(int(rank))
+            y.append(int(acc))
+        return x, y
 
 
 def wrapper():
     cli = argparse.ArgumentParser("Parse data in various format into `default.json`-format")
-    task_func_dict: Dict[str, Callable[[str], Tuple[List[Union[float, int]], List[float], int]]] = {
+    task_func_dict: Dict[str, Callable[[str], Tuple[List[Union[float, int]], List[float]]]] = {
         'cdf': read_cdf,
         'adams': read_adams,
+        'gc': read_gc,
+        'bert_adams': read_bert_adams,
     }
     cli.add_argument("-l", "--label", required=False, dest="label", default=None, type=str,
                      help="how to identify this curve")
     cli.add_argument("-f", "--file", required=False, dest="fd_in", type=str,
                      default=None, help="CDF Zipf result file to be parsed")
-    cli.add_argument('-t', "--task", required=True, dest='task', type=str, choices=['cdf', 'adams'],
+    cli.add_argument('-t', "--task", required=True, dest='task', type=str, choices=list(task_func_dict.keys()),
                      help='Choose the task you want to call')
+    cli.add_argument("--total", default=-1, tyee=int,
+                     help='the total number. It is useful when we calculate the percentage')
     cli.add_argument("-s", "--save", required=True, dest="fd_save", type=str,
                      help="save parsed data here")
     cli.add_argument("--lower", required=False, dest="lower_bound", default=0, type=int,
@@ -90,8 +114,9 @@ def wrapper():
             raise Exception("onoffseq should have even items!")
         line_style = (offset, tuple(onoffseq))
     chosen_task = task_func_dict[args.task]
-    x, y, total = chosen_task(args.fd_in)
+    x, y = chosen_task(args.fd_in)
     text_color = args.color if args.color is not None else "black"
+    total = args.total
     json.dump({
         "label": args.label,
         "total": total,
