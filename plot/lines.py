@@ -267,7 +267,7 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
             label_line[vline_label].append(line)
     # display grid
     if plot_params.show_grid:
-        plt.grid(b=True, ls=plot_params.grid_linestyle)
+        plt.grid(visible=True, ls=plot_params.grid_linestyle)
     # hide which boarder
     for direction in plot_params.no_boarder:
         ax.spines[direction].set_color('none')
