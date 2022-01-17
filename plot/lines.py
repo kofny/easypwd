@@ -171,7 +171,6 @@ class LineParam:
         Note that x_list, y_list and total are required, while others are optional
         :param json_file: json file
         :param close_fd: close json file
-        :param use_rate: convert {number} to {percentage of number}
         """
         data: Dict[Any, Any] = json.load(json_file)
         y_list = data["y_list"]
