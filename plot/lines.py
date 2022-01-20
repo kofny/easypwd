@@ -306,9 +306,12 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
 def main():
     line_style_dict = {
         "solid": "-",
+        "dashed": "--",
         "dash": "--",
-        "dot_dash": "-.",
-        "dot": ":"
+        "dot_dash": '-.',
+        "dashdot": "-.",
+        "dot": ":",
+        "dotted": ":"
     }
     cli = argparse.ArgumentParser("Curver: An Easy Guess-Crack Curve Drawer")
     valid_suffix = [".pdf", ".png", '.svg']
