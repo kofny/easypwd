@@ -5,6 +5,7 @@ Top 10 rules for Rule-based Password Guessing.
 import argparse
 import json
 import sys
+import time
 from typing import List
 
 
@@ -19,6 +20,7 @@ def top_rules(log_path: str, rules: List[str], n: int):
     counter = [[i, 0] for i in range(len(rules))]
     with open(log_path, 'r') as f_log:
         parsed = 0
+        start_time = time.time()
         for line in f_log:
             if not line.startswith('['):
                 continue
@@ -27,8 +29,10 @@ def top_rules(log_path: str, rules: List[str], n: int):
             for rule_id in rule_ids:
                 counter[rule_id][1] += 1
             parsed += 1
-            if parsed % 1000 == 0:
-                print(f"parsed {parsed:10,} lines\r", end='')
+            if parsed % 1024 == 0:
+                end_time = time.time()
+                print(f"parsed {parsed:10,} lines for log in {end_time - start_time:10,} seconds\r", end='')
+    print()
     counter = sorted(counter, key=lambda x: x[1], reverse=True)
     n = max(min(len(rules), n), 1)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in counter[:n]]
