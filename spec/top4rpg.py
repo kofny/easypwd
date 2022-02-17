@@ -29,7 +29,7 @@ def top_rules(log_path: str, rules: List[str], n: int):
             parsed += 1
             if parsed % 1000 == 0:
                 print(f"parsed {parsed}\r", end='')
-    sorted(counter, key=lambda x: x[1], reverse=True)
+    counter = sorted(counter, key=lambda x: x[1], reverse=True)
     n = max(min(len(rules), n), 1)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in counter[:n]]
     total_chosen = sum([count for _, count in counter])
@@ -48,7 +48,7 @@ def top_hit_rules(rules: List[str], hit_path: str, n: int):
             rule_id = rule_map[rule]
             hit_counter[rule_id][1] += 1
         pass
-    sorted(hit_counter, key=lambda x: x[1], reverse=True)
+    hit_counter = sorted(hit_counter, key=lambda x: x[1], reverse=True)
     n = max(min(len(rules), n), 1)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in hit_counter[:n]]
     total_hit = sum([count for _, count in hit_counter])
