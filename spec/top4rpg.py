@@ -35,7 +35,6 @@ def top_rules(log_path: str, rules: List[str], n: int):
                       file=sys.stderr)
     print("", file=sys.stderr)
     counter = sorted(counter, key=lambda x: x[1], reverse=True)
-    n = max(min(len(rules), n), 1)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in counter[:n]]
     total_chosen = sum([count for _, count in counter])
     return wanted_rules, total_chosen
@@ -54,9 +53,6 @@ def top_hit_rules(rules: List[str], hit_path: str, n: int):
             hit_counter[rule_id][1] += 1
         pass
     hit_counter = sorted(hit_counter, key=lambda x: x[1], reverse=True)
-    n = min(len(rules), n)
-    if n <= 0:
-        n = len(rules)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in hit_counter[:n]]
     total_hit = sum([count for _, count in hit_counter])
     return wanted_rules, total_hit
@@ -78,11 +74,14 @@ def wrapper():
     cli.add_argument('-n', '--top-n', dest='n', type=int, default=10, help='top n rules to display')
     args = cli.parse_args()
     rules = read_rules(rule_path=args.rules_path)
+    n = min(len(rules), args.n)
+    if n <= 0:
+        n = len(rules)
     if args.hit_path is not None:
-        hit_rules, total_hit = top_hit_rules(hit_path=args.hit_path, rules=rules, n=args.n)
+        hit_rules, total_hit = top_hit_rules(hit_path=args.hit_path, rules=rules, n=n)
         printing(hit_rules, total_hit, msg='Hit rules by `words + rules`')
     if args.log_path is not None:
-        chosen_rules, total_chosen = top_rules(log_path=args.log_path, rules=rules, n=args.n)
+        chosen_rules, total_chosen = top_rules(log_path=args.log_path, rules=rules, n=n)
         printing(chosen_rules, total_chosen, msg='Chosen rules by model')
     pass
 
