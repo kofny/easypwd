@@ -31,8 +31,9 @@ def top_rules(log_path: str, rules: List[str], n: int):
             parsed += 1
             if parsed % 1024 == 0:
                 end_time = time.time()
-                print(f"parsed {parsed:10,} lines for log in {end_time - start_time:10.3f} seconds\r", end='')
-    print()
+                print(f"parsed {parsed:10,} lines for log in {end_time - start_time:10.3f} seconds\r", end='',
+                      file=sys.stderr)
+    print("", file=sys.stderr)
     counter = sorted(counter, key=lambda x: x[1], reverse=True)
     n = max(min(len(rules), n), 1)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in counter[:n]]
@@ -65,6 +66,7 @@ def printing(rules, total, msg, fd=sys.stdout):
     print(msg, file=fd)
     for rule, count in rules:
         print(f"{rule:10}, {count:8,}, {count / total:5.2%}", file=fd)
+    fd.flush()
     pass
 
 
