@@ -31,7 +31,7 @@ def top_rules(log_path: str, rules: List[str], n: int):
             parsed += 1
             if parsed % 1024 == 0:
                 end_time = time.time()
-                print(f"parsed {parsed:10,} lines for log in {end_time - start_time:10,} seconds\r", end='')
+                print(f"parsed {parsed:10,} lines for log in {end_time - start_time:10.3f} seconds\r", end='')
     print()
     counter = sorted(counter, key=lambda x: x[1], reverse=True)
     n = max(min(len(rules), n), 1)
