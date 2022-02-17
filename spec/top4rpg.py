@@ -57,7 +57,7 @@ def printing(rules, total, msg, fd=sys.stdout):
     pass
 
 
-def main():
+def wrapper():
     cli = argparse.ArgumentParser("Top Rules for RPG")
     cli.add_argument('-r', '--rules', dest='rules_path', required=True, type=str, help='filepath of rules')
     cli.add_argument('--log', dest='log_path', type=str, help='filepath of log')
@@ -69,4 +69,9 @@ def main():
     hit_rules, total_hit = top_hit_rules(hit_path=args.hit_path, rules=rules, n=args.n)
     printing(chosen_rules, total_chosen, msg='Chosen rules by model')
     printing(hit_rules, total_hit, msg='Hit rules by `words + rules`')
+    pass
+
+
+if __name__ == '__main__':
+    wrapper()
     pass
