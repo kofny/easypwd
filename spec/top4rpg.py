@@ -44,6 +44,7 @@ def top_hit_rules(rules: List[str], hit_path: str, n: int):
     with open(hit_path, 'r') as f_hits:
         for hit_line in f_hits:
             word, _, rule, _, _, _ = hit_line.strip('\r\n').split('\t')
+            rule = rule.replace(' ', '')
             rule_id = rule_map[rule]
             hit_counter[rule_id][1] += 1
         pass
