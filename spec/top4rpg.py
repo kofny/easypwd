@@ -28,7 +28,7 @@ def top_rules(log_path: str, rules: List[str], n: int):
                 counter[rule_id][1] += 1
             parsed += 1
             if parsed % 1000 == 0:
-                print(f"parsed {parsed}\r", end='')
+                print(f"parsed {parsed:10,} lines\r", end='')
     counter = sorted(counter, key=lambda x: x[1], reverse=True)
     n = max(min(len(rules), n), 1)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in counter[:n]]
@@ -58,7 +58,7 @@ def top_hit_rules(rules: List[str], hit_path: str, n: int):
 def printing(rules, total, msg, fd=sys.stdout):
     print(msg, file=fd)
     for rule, count in rules:
-        print(f"{rule:16}, {count:8}, {count / total:5.2%}", file=fd)
+        print(f"{rule:16}, {count:8,}, {count / total:5.2%}", file=fd)
     pass
 
 
@@ -70,12 +70,12 @@ def wrapper():
     cli.add_argument('-n', '--top-n', dest='n', type=int, default=10, help='top n rules to display')
     args = cli.parse_args()
     rules = read_rules(rule_path=args.rules_path)
-    if args.log_path is not None:
-        chosen_rules, total_chosen = top_rules(log_path=args.log_path, rules=rules, n=args.n)
-        printing(chosen_rules, total_chosen, msg='Chosen rules by model')
     if args.hit_path is not None:
         hit_rules, total_hit = top_hit_rules(hit_path=args.hit_path, rules=rules, n=args.n)
         printing(hit_rules, total_hit, msg='Hit rules by `words + rules`')
+    if args.log_path is not None:
+        chosen_rules, total_chosen = top_rules(log_path=args.log_path, rules=rules, n=args.n)
+        printing(chosen_rules, total_chosen, msg='Chosen rules by model')
     pass
 
 
