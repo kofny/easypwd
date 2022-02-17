@@ -53,7 +53,9 @@ def top_hit_rules(rules: List[str], hit_path: str, n: int):
             hit_counter[rule_id][1] += 1
         pass
     hit_counter = sorted(hit_counter, key=lambda x: x[1], reverse=True)
-    n = max(min(len(rules), n), 1)
+    n = min(len(rules), n)
+    if n <= 0:
+        n = len(rules)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in hit_counter[:n]]
     total_hit = sum([count for _, count in hit_counter])
     return wanted_rules, total_hit
@@ -62,7 +64,7 @@ def top_hit_rules(rules: List[str], hit_path: str, n: int):
 def printing(rules, total, msg, fd=sys.stdout):
     print(msg, file=fd)
     for rule, count in rules:
-        print(f"{rule:16}, {count:8,}, {count / total:5.2%}", file=fd)
+        print(f"{rule:10}, {count:8,}, {count / total:5.2%}", file=fd)
     pass
 
 
