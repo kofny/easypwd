@@ -28,7 +28,7 @@ def top_rules(log_path: str, rules: List[str], n: int):
                 counter[rule_id][1] += 1
             parsed += 1
             if parsed % 1000 == 0:
-                print(f"parsed {parsed}\r")
+                print(f"parsed {parsed}\r", end='')
     sorted(counter, key=lambda x: x[1], reverse=True)
     n = max(min(len(rules), n), 1)
     wanted_rules = [[rules[rule_id], count] for rule_id, count in counter[:n]]
