@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Top 10 rules for Rule-based Password Guessing.
 """
