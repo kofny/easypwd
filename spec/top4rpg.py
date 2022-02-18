@@ -4,6 +4,8 @@ Top 10 rules for Rule-based Password Guessing.
 """
 import argparse
 import json
+import re
+
 import sys
 import time
 from typing import List
@@ -45,10 +47,11 @@ def top_hit_rules(rules: List[str], hit_path: str, n: int):
     rule_map = {}
     for i, rule in enumerate(rules):
         rule_map[rule] = i
+    remove_single_space = re.compile(r' (?! )')
     with open(hit_path, 'r') as f_hits:
         for hit_line in f_hits:
             word, _, rule, _, _, _ = hit_line.strip('\r\n').split('\t')
-            rule = rule.replace(' ', '')
+            rule = remove_single_space.sub('', rule)
             rule_id = rule_map[rule]
             hit_counter[rule_id][1] += 1
         pass
