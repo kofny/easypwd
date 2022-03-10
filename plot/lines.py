@@ -279,9 +279,20 @@ def curve(json_files: List[TextIO], plot_params: PlotParams, close_fd: bool = Tr
         sub_params = plot_params.sub_params
         inner.set_xscale(plot_params.xscale)
         inner.set_yscale(plot_params.yscale)
-        inner.set_xlim(xmin=sub_params.xmin or plot_params.xlim_low, xmax=sub_params.xmax or plot_params.xlim_high)
-        inner.set_ylim(ymin=sub_params.ymin or plot_params.ylim_low, ymax=sub_params.ymax or plot_params.ylim_high)
-        inner.set_xticks(sub_params.xticks or plot_params.xticks_val)
+        __xmin, __xmax = sub_params.xmin or plot_params.xlim_low, sub_params.xmax or plot_params.xlim_high
+        inner.set_xlim(xmin=__xmin, xmax=__xmax)
+        __ymin, __ymax = sub_params.ymin or plot_params.ylim_low, sub_params.ymax or plot_params.ylim_high
+        inner.set_ylim(ymin=__ymin, ymax=__ymax)
+        if len(sub_params.xticks) == 0 or len(sub_params.xticklabels) == 0:
+            x_indices = [__idx for __idx, __val in enumerate(plot_params.xticks_val) if __xmin <= __val <= __xmax]
+            sub_params.xticks = [plot_params.xticks_val[i] for i in x_indices]
+            sub_params.xticklabels = [plot_params.xticks_text[i] for i in x_indices]
+        print(sub_params.xticks)
+        inner.set_xticks(sub_params.xticks)
+        if len(sub_params.yticks) == 0 or len(sub_params.yticklabels) == 0:
+            y_indices = [__idx for __idx, __val in enumerate(plot_params.yticks_val) if __ymin <= __val <= __ymax]
+            sub_params.yticks = [plot_params.yticks_val[i] for i in y_indices]
+            sub_params.yticklabels = [plot_params.yticks_text[i] for i in y_indices]
         inner.set_yticks(sub_params.yticks or plot_params.yticks_val)
         inner.set_xticklabels(sub_params.xticklabels,
                               fontdict={'size': sub_params.tickfontsize or plot_params.tick_size})

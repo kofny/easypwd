@@ -115,7 +115,7 @@ Note that in the json file, `total < -1 ` is equal to "we do not need to divide 
 - `--subfig-xticks <number> ... <number>` ticks shown in the figure
 - `--subfig-xticklabels <name> ... <name>` name corresponding to each tick
 - `--subfig-tick-size <number>`
-- `--mark-inset <from corner id> <to corner id>` draw a line from a corner to another corner
+- `--mark-inset <from corner id> <to corner id>` draw a line from a corner to another corner. `1` is at top right cornor, `2` top left, `3` bottom left, `4` bottom right.
 
 ```bash
 --inset-axes 0.49 0.18 0.45 0.35 \
