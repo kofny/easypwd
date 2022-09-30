@@ -3,7 +3,7 @@ chardet==4.0.0
 colorspacious==1.1.2
 cycler==0.11.0
 fonttools==4.28.5
-joblib==1.1.0
+joblib==1.2.0
 kiwisolver==1.3.2
 matplotlib==3.4.0
 memory-profiler==0.60.0
